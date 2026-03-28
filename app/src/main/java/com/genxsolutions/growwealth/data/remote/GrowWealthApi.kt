@@ -1,6 +1,7 @@
 package com.genxsolutions.growwealth.data.remote
 
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface GrowWealthApi {
@@ -17,4 +18,18 @@ interface GrowWealthApi {
         @Query("offset") offset: Int = 0,
         @Query("sort") sort: String = "confidence_desc"
     ): SectorSignalsResponse
+
+    @GET("v1/sectors/trends")
+    suspend fun getSectorTrends(
+        @Query("date") date: String? = null,
+        @Query("days") days: Int = 7,
+        @Query("sector_ids") sectorIds: String? = null
+    ): SectorTrendsResponse
+
+    @GET("v1/sectors/{sectorId}/detail")
+    suspend fun getSectorDetail(
+        @Path("sectorId") sectorId: Int,
+        @Query("from") from: String? = null,
+        @Query("to") to: String? = null
+    ): SectorDetailResponse
 }

@@ -1,6 +1,7 @@
 package com.genxsolutions.growwealth.feature.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,7 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.genxsolutions.growwealth.data.remote.SectorDetailResponse
 import com.genxsolutions.growwealth.data.remote.SectorSignal
+import com.genxsolutions.growwealth.data.remote.SectorTrend
 
 private val homeBackground = Color(0xFFECEFF4)
 private val freshnessBackground = Color(0xFF102A4D)
@@ -50,6 +53,8 @@ private val sectorCardBackground = Color(0xFFFDFEFF)
 fun HomeScreen(
     state: HomeUiState,
     onRetry: () -> Unit,
+    onSectorClick: (Int) -> Unit,
+    onCloseDetail: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     when {
@@ -78,7 +83,13 @@ fun HomeScreen(
         }
 
         else -> {
-            HomeContent(state = state, onRetry = onRetry, modifier = modifier)
+            HomeContent(
+                state = state,
+                onRetry = onRetry,
+                onSectorClick = onSectorClick,
+                onCloseDetail = onCloseDetail,
+                modifier = modifier
+            )
         }
     }
 }
@@ -88,6 +99,8 @@ fun HomeScreen(
 private fun HomeContent(
     state: HomeUiState,
     onRetry: () -> Unit,
+    onSectorClick: (Int) -> Unit,
+    onCloseDetail: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pullState = rememberPullToRefreshState()
@@ -121,6 +134,11 @@ private fun HomeContent(
                         avgSentiment = mood?.avgSentimentScore ?: 0.0
                     )
                 }
+                if (state.trends.isNotEmpty()) {
+                    item {
+                        MiniTrendStripCard(trends = state.trends)
+                    }
+                }
                 item {
                     Text(
                         text = "Top Sector Signals",
@@ -131,8 +149,16 @@ private fun HomeContent(
                     )
                 }
                 items(state.sectors) { sector ->
-                    SectorSignalRow(sector = sector)
+                    SectorSignalRow(sector = sector, onClick = { onSectorClick(sector.sectorId) })
                 }
+            }
+
+            if (state.selectedSectorDetail != null) {
+                SectorDetailOverlay(
+                    detail = state.selectedSectorDetail,
+                    onClose = onCloseDetail,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
@@ -221,7 +247,59 @@ private fun MarketMoodCard(
 }
 
 @Composable
-private fun SectorSignalRow(sector: SectorSignal) {
+private fun MiniTrendStripCard(trends: List<SectorTrend>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = moodBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = "7-Day Sector Pulse",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = headingColor
+            )
+            trends.take(5).forEach { trend ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = trend.sectorName,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF2F4654)
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        trend.points.takeLast(7).forEach { point ->
+                            val color = when {
+                                point.sentimentScore > 0.05 -> upColor
+                                point.sentimentScore < -0.05 -> downColor
+                                else -> neutralColor
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(width = 10.dp, height = 14.dp)
+                                    .background(color = color.copy(alpha = 0.8f), shape = RoundedCornerShape(3.dp))
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectorSignalRow(sector: SectorSignal, onClick: () -> Unit) {
     val signalColor = when (sector.signal) {
         "UP" -> upColor
         "DOWN" -> downColor
@@ -229,7 +307,9 @@ private fun SectorSignalRow(sector: SectorSignal) {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = sectorCardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
@@ -287,6 +367,100 @@ private fun SectorSignalRow(sector: SectorSignal) {
 }
 
 @Composable
+private fun SectorDetailOverlay(
+    detail: SectorDetailResponse,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .background(Color(0xA6000000))
+            .padding(18.dp),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(520.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = detail.sector?.sectorName ?: "Sector Detail",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = headingColor
+                )
+                Text(
+                    text = "${detail.range?.from.orEmpty()} to ${detail.range?.to.orEmpty()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF607380)
+                )
+                Divider(color = cardBorder)
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(detail.timeline) { point ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC))
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(point.date, fontWeight = FontWeight.SemiBold)
+                                    SoftBadge(
+                                        text = signalText(point.signal),
+                                        background = signalColor(point.signal).copy(alpha = 0.14f),
+                                        textColor = signalColor(point.signal)
+                                    )
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Confidence", color = Color(0xFF4B5B67))
+                                    Text(confidenceLevel(point.confidence), fontWeight = FontWeight.SemiBold)
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("News tone", color = Color(0xFF4B5B67))
+                                    Text(sentimentLabel(point.sentimentScore), fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                    }
+                }
+                Button(
+                    onClick = onClose,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Close")
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun MoodChip(label: String, value: Int, color: Color, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
@@ -305,6 +479,14 @@ private fun signalText(signal: String): String {
         "UP" -> "Improving"
         "DOWN" -> "Weakening"
         else -> "Stable"
+    }
+}
+
+private fun signalColor(signal: String): Color {
+    return when (signal) {
+        "UP" -> upColor
+        "DOWN" -> downColor
+        else -> neutralColor
     }
 }
 
@@ -334,7 +516,7 @@ private fun shortSectorSummary(sector: SectorSignal): String {
         "DOWN" -> "Looks weakening"
         else -> "Looks stable"
     }
-    return "$direction • Confidence ${confidenceLevel(sector.confidence)}"
+    return "$direction � Confidence ${confidenceLevel(sector.confidence)}"
 }
 
 @Composable

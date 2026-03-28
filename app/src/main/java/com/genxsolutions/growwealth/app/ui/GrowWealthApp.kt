@@ -73,6 +73,8 @@ fun GrowWealthApp() {
                     HomeScreen(
                         state = state,
                         onRetry = homeViewModel::refresh,
+                        onSectorClick = homeViewModel::openSectorDetail,
+                        onCloseDetail = homeViewModel::closeSectorDetail,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
