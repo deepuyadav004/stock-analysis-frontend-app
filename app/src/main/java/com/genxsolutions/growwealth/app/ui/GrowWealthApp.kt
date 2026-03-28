@@ -13,19 +13,22 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.genxsolutions.growwealth.data.remote.NetworkModule
 import com.genxsolutions.growwealth.feature.home.HomeRepository
 import com.genxsolutions.growwealth.feature.home.HomeScreen
 import com.genxsolutions.growwealth.feature.home.HomeViewModel
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.unit.dp
+import com.genxsolutions.growwealth.feature.sectors.SectorsRepository
+import com.genxsolutions.growwealth.feature.sectors.SectorsScreen
+import com.genxsolutions.growwealth.feature.sectors.SectorsViewModel
 
 enum class AppTab(val label: String) {
     Home("Home"),
@@ -79,7 +82,21 @@ fun GrowWealthApp() {
                     )
                 }
 
-                AppTab.Sectors,
+                AppTab.Sectors -> {
+                    val sectorsViewModel: SectorsViewModel = viewModel(
+                        factory = SectorsViewModel.Factory(SectorsRepository(NetworkModule.api))
+                    )
+                    val state by sectorsViewModel.uiState.collectAsState()
+                    SectorsScreen(
+                        state = state,
+                        onRefresh = sectorsViewModel::refresh,
+                        onLoadMore = sectorsViewModel::loadMore,
+                        onFilterChange = sectorsViewModel::updateFilter,
+                        onSectorClick = { /* TODO: navigate to sector detail or use shared detail modal */ },
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+
                 AppTab.Insights,
                 AppTab.Watchlist -> {
                     PlaceholderScreen(

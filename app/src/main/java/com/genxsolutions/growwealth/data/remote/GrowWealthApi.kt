@@ -16,7 +16,10 @@ interface GrowWealthApi {
         @Query("date") date: String? = null,
         @Query("limit") limit: Int = 20,
         @Query("offset") offset: Int = 0,
-        @Query("sort") sort: String = "confidence_desc"
+        @Query("sort") sort: String = "confidence_desc",
+        @Query("signal") signal: String? = null,
+        @Query("confidence_min") confidenceMin: Double? = null,
+        @Query("confidence_max") confidenceMax: Double? = null
     ): SectorSignalsResponse
 
     @GET("v1/sectors/trends")
