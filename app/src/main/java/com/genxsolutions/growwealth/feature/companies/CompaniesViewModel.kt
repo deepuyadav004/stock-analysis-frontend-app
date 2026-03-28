@@ -10,6 +10,8 @@ import com.genxsolutions.growwealth.data.remote.CompanySummaryResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 data class CompanyFilter(
@@ -38,6 +40,7 @@ class CompaniesViewModel(private val repository: CompaniesRepository) : ViewMode
     val uiState: StateFlow<CompaniesUiState> = _uiState.asStateFlow()
 
     private val pageSize = 10
+    private var searchJob: Job? = null
     init {
         refresh()
     }
@@ -113,9 +116,23 @@ class CompaniesViewModel(private val repository: CompaniesRepository) : ViewMode
 
     fun updateQuery(query: String) {
         _uiState.value = _uiState.value.copy(filter = _uiState.value.filter.copy(query = query))
+
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(450)
+            refresh()
+        }
     }
 
     fun applySearch() {
+        refresh()
+    }
+
+    fun applyFilters(query: String, signal: String?) {
+        searchJob?.cancel()
+        _uiState.value = _uiState.value.copy(
+            filter = _uiState.value.filter.copy(query = query, signal = signal)
+        )
         refresh()
     }
 

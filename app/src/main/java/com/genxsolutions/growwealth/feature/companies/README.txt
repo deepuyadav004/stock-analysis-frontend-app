@@ -13,12 +13,13 @@ Replaces sector-heavy exploration with direct company list access, making stock 
 
 4. Step-by-Step Flow
 1. Companies tab opens and ViewModel loads first list page.
-2. User searches and/or applies signal filters.
+2. User opens popup via filter icon and applies search text + signal filter together.
 3. User can toggle company watchlist directly from list cards.
 4. List refreshes and paginates while scrolling.
 5. User taps a company card.
 6. App fetches summary + default range performance.
 7. User switches ranges (1W, 1M, 1Y, 3Y, 5Y, 10Y) to compare returns.
+8. User drags on chart to inspect a point with crosshair and date/price readout.
 
 5. Interactions
 - Uses data/remote API contracts via GrowWealthApi.

@@ -3,6 +3,7 @@ package com.genxsolutions.growwealth.feature.companies
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Button
@@ -36,10 +37,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -57,8 +57,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.input.pointer.pointerInput
 import com.genxsolutions.growwealth.data.remote.CompanyListItem
+import com.genxsolutions.growwealth.data.remote.CompanyPerformancePoint
 import com.genxsolutions.growwealth.data.remote.CompanyPerformanceResponse
+import kotlin.math.roundToInt
 
 private val background = Color(0xFFECEFF4)
 private val cardBg = Color(0xFFFFFFFF)
@@ -66,6 +69,8 @@ private val headingColor = Color(0xFF0D2438)
 private val upColor = Color(0xFF1B8A5A)
 private val downColor = Color(0xFFD64545)
 private val neutralColor = Color(0xFF607D8B)
+private val filterCardBg = Color(0xFFF8FBFF)
+private val filterCardBorder = Color(0xFFD9E4F0)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,9 +78,7 @@ fun CompaniesScreen(
     state: CompaniesUiState,
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
-    onQueryChange: (String) -> Unit,
-    onApplySearch: () -> Unit,
-    onSignalFilter: (String?) -> Unit,
+    onApplyFilters: (String, String?) -> Unit,
     onCompanyClick: (Int) -> Unit,
     onToggleWatchlist: (CompanyListItem) -> Unit,
     watchlistCompanyIds: Set<Int>,
@@ -84,23 +87,14 @@ fun CompaniesScreen(
     modifier: Modifier = Modifier
 ) {
     val pullState = rememberPullToRefreshState()
+    var showFilterDialog by remember { mutableStateOf(false) }
 
     Surface(modifier = modifier.fillMaxSize(), color = background) {
         Column(modifier = Modifier.fillMaxSize()) {
-            TopAppBar(
-                title = { Text("Companies") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = headingColor
-                )
-            )
-
             SearchAndFilterBar(
                 filter = state.filter,
-                onQueryChange = onQueryChange,
-                onApplySearch = onApplySearch,
-                onSignalFilter = onSignalFilter,
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+                onOpenFilter = { showFilterDialog = true },
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)
             )
 
             PullToRefreshBox(
@@ -150,6 +144,17 @@ fun CompaniesScreen(
             }
         }
 
+        if (showFilterDialog) {
+            CompanyFilterDialog(
+                filter = state.filter,
+                onApply = { query, selectedSignal ->
+                    onApplyFilters(query, selectedSignal)
+                    showFilterDialog = false
+                },
+                onDismiss = { showFilterDialog = false }
+            )
+        }
+
         if (state.selectedCompanySummary != null && state.selectedPerformance != null) {
             CompanyDetailOverlay(
                 state = state,
@@ -164,40 +169,163 @@ fun CompaniesScreen(
 @Composable
 private fun SearchAndFilterBar(
     filter: CompanyFilter,
-    onQueryChange: (String) -> Unit,
-    onApplySearch: () -> Unit,
-    onSignalFilter: (String?) -> Unit,
+    onOpenFilter: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        OutlinedTextField(
-            value = filter.query,
-            onValueChange = onQueryChange,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            label = { Text("Search company or ticker") },
-            trailingIcon = {
-                IconButton(onClick = onApplySearch) {
-                    Icon(Icons.Default.Search, contentDescription = "Search")
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = filterCardBg),
+        border = androidx.compose.foundation.BorderStroke(1.dp, filterCardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onOpenFilter),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCBD8E6))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Open search and filters", color = Color(0xFF3D566B), fontWeight = FontWeight.SemiBold)
+                    Icon(
+                        imageVector = Icons.Default.FilterList,
+                        contentDescription = "Open filters",
+                        tint = Color(0xFF2E5C92)
+                    )
                 }
             }
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SignalChip(label = "All", selected = filter.signal == null, onClick = { onSignalFilter(null) })
-            SignalChip(label = "Up", selected = filter.signal == "UP", onClick = { onSignalFilter("UP") })
-            SignalChip(label = "Down", selected = filter.signal == "DOWN", onClick = { onSignalFilter("DOWN") })
-            SignalChip(label = "Neutral", selected = filter.signal == "NEUTRAL", onClick = { onSignalFilter("NEUTRAL") })
+
+            val activeFilterText = when (filter.signal) {
+                null -> "All signals"
+                else -> "Signal: ${filter.signal}"
+            }
+            Text(
+                text = activeFilterText,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF5A7083)
+            )
         }
     }
 }
 
 @Composable
-private fun SignalChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = { Text(label) }
-    )
+private fun CompanyFilterDialog(
+    filter: CompanyFilter,
+    onApply: (String, String?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var query by remember { mutableStateOf(filter.query) }
+    var selectedSignal by remember { mutableStateOf(filter.signal) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.5f))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onDismiss
+            ),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .height(430.dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {}
+                ),
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Filter Companies", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    }
+                }
+
+                Text("Signal", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    label = { Text("Search company or ticker") }
+                )
+
+                listOf<String?>(null, "UP", "DOWN", "NEUTRAL").forEach { signal ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selectedSignal = signal }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            when (signal) {
+                                null -> "All"
+                                else -> signal
+                            }
+                        )
+                        RadioButton(
+                            selected = selectedSignal == signal,
+                            onClick = { selectedSignal = signal }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = { selectedSignal = null },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Clear")
+                    }
+                    Button(
+                        onClick = { onApply(query, selectedSignal) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Apply")
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -433,7 +561,7 @@ private fun CompanyDetailOverlay(
                     }
                 } else {
                     PerformanceChart(
-                        points = performance.points.map { it.close },
+                        points = performance.points,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(180.dp)
@@ -468,7 +596,7 @@ private fun CompanyDetailOverlay(
 }
 
 @Composable
-private fun PerformanceChart(points: List<Double>, modifier: Modifier = Modifier) {
+private fun PerformanceChart(points: List<CompanyPerformancePoint>, modifier: Modifier = Modifier) {
     if (points.size < 2) {
         Box(modifier = modifier.background(Color(0xFFF8FAFC), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
             Text("Not enough points for chart", style = MaterialTheme.typography.bodySmall)
@@ -476,37 +604,100 @@ private fun PerformanceChart(points: List<Double>, modifier: Modifier = Modifier
         return
     }
 
-    val min = points.minOrNull() ?: 0.0
-    val max = points.maxOrNull() ?: 0.0
+    var selectedIndex by remember(points) { mutableStateOf(points.lastIndex) }
+
+    val min = points.minOfOrNull { it.close } ?: 0.0
+    val max = points.maxOfOrNull { it.close } ?: 0.0
     val range = (max - min).takeIf { it > 0.0 } ?: 1.0
     val lineColor = when {
-        points.last() > points.first() -> upColor
-        points.last() < points.first() -> downColor
+        points.last().close > points.first().close -> upColor
+        points.last().close < points.first().close -> downColor
         else -> neutralColor
     }
 
-    Canvas(
-        modifier = modifier.background(Color(0xFFF8FAFC), RoundedCornerShape(12.dp))
-    ) {
-        val width = size.width
-        val height = size.height
-        val stepX = width / (points.size - 1)
+    val selectedPoint = points[selectedIndex]
 
-        val path = Path()
-        points.forEachIndexed { index, value ->
-            val x = index * stepX
-            val normalized = ((value - min) / range).toFloat()
-            val y = height - normalized * (height - 20f) - 10f
-            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = selectedPoint.date,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF5A7083)
+            )
+            Text(
+                text = formatPrice(selectedPoint.close),
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF21384D)
+            )
         }
 
-        drawLine(
-            color = Color(0xFFE1E8EE),
-            start = Offset(0f, height - 12f),
-            end = Offset(width, height - 12f),
-            strokeWidth = 2f
-        )
-        drawPath(path = path, color = lineColor, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 5f))
+        Canvas(
+            modifier = modifier
+                .background(Color(0xFFF8FAFC), RoundedCornerShape(12.dp))
+                .pointerInput(points) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            val width = size.width.toFloat().coerceAtLeast(1f)
+                            val rawIndex = ((offset.x / width) * (points.size - 1)).roundToInt()
+                            selectedIndex = rawIndex.coerceIn(0, points.lastIndex)
+                        },
+                        onDrag = { change, _ ->
+                            val width = size.width.toFloat().coerceAtLeast(1f)
+                            val rawIndex = ((change.position.x / width) * (points.size - 1)).roundToInt()
+                            selectedIndex = rawIndex.coerceIn(0, points.lastIndex)
+                            change.consume()
+                        }
+                    )
+                }
+        ) {
+            val width = size.width
+            val height = size.height
+            val stepX = width / (points.size - 1)
+
+            val path = Path()
+            points.forEachIndexed { index, point ->
+                val x = index * stepX
+                val normalized = ((point.close - min) / range).toFloat()
+                val y = height - normalized * (height - 20f) - 10f
+                if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            }
+
+            drawLine(
+                color = Color(0xFFE1E8EE),
+                start = Offset(0f, height - 12f),
+                end = Offset(width, height - 12f),
+                strokeWidth = 2f
+            )
+            drawPath(path = path, color = lineColor, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 5f))
+
+            val selectedX = selectedIndex * stepX
+            val selectedNormalized = ((points[selectedIndex].close - min) / range).toFloat()
+            val selectedY = height - selectedNormalized * (height - 20f) - 10f
+
+            // Crosshair line from top to bottom at touched point.
+            drawLine(
+                color = Color(0xFF8AA2BA),
+                start = Offset(selectedX, 0f),
+                end = Offset(selectedX, height),
+                strokeWidth = 2f
+            )
+
+            drawCircle(
+                color = lineColor,
+                radius = 7f,
+                center = Offset(selectedX, selectedY)
+            )
+            drawCircle(
+                color = Color.White,
+                radius = 3f,
+                center = Offset(selectedX, selectedY)
+            )
+        }
     }
 }
 
