@@ -35,4 +35,16 @@ interface GrowWealthApi {
         @Query("from") from: String? = null,
         @Query("to") to: String? = null
     ): SectorDetailResponse
+
+    @GET("v1/insights/sector-compare")
+    suspend fun getInsightsSectorCompare(
+        @Query("date") date: String? = null,
+        @Query("days") days: Int
+    ): InsightsCompareResponse
+
+    @GET("v1/insights/signal-stability")
+    suspend fun getInsightsSignalStability(
+        @Query("date") date: String? = null,
+        @Query("days") days: Int = 30
+    ): InsightsStabilityResponse
 }

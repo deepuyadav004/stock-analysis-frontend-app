@@ -23,11 +23,16 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +59,8 @@ fun HomeScreen(
     state: HomeUiState,
     onRetry: () -> Unit,
     onSectorClick: (Int) -> Unit,
+    onToggleWatchlist: (SectorSignal) -> Unit,
+    watchlistSectorIds: Set<Int>,
     onCloseDetail: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -87,6 +94,8 @@ fun HomeScreen(
                 state = state,
                 onRetry = onRetry,
                 onSectorClick = onSectorClick,
+                onToggleWatchlist = onToggleWatchlist,
+                watchlistSectorIds = watchlistSectorIds,
                 onCloseDetail = onCloseDetail,
                 modifier = modifier
             )
@@ -100,6 +109,8 @@ private fun HomeContent(
     state: HomeUiState,
     onRetry: () -> Unit,
     onSectorClick: (Int) -> Unit,
+    onToggleWatchlist: (SectorSignal) -> Unit,
+    watchlistSectorIds: Set<Int>,
     onCloseDetail: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -149,7 +160,12 @@ private fun HomeContent(
                     )
                 }
                 items(state.sectors) { sector ->
-                    SectorSignalRow(sector = sector, onClick = { onSectorClick(sector.sectorId) })
+                    SectorSignalRow(
+                        sector = sector,
+                        isWatchlisted = watchlistSectorIds.contains(sector.sectorId),
+                        onWatchlistClick = { onToggleWatchlist(sector) },
+                        onClick = { onSectorClick(sector.sectorId) }
+                    )
                 }
             }
 
@@ -299,7 +315,12 @@ private fun MiniTrendStripCard(trends: List<SectorTrend>) {
 }
 
 @Composable
-private fun SectorSignalRow(sector: SectorSignal, onClick: () -> Unit) {
+private fun SectorSignalRow(
+    sector: SectorSignal,
+    isWatchlisted: Boolean,
+    onWatchlistClick: () -> Unit,
+    onClick: () -> Unit
+) {
     val signalColor = when (sector.signal) {
         "UP" -> upColor
         "DOWN" -> downColor
@@ -340,6 +361,21 @@ private fun SectorSignalRow(sector: SectorSignal, onClick: () -> Unit) {
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f)
                     )
+                    IconButton(onClick = onWatchlistClick) {
+                        if (isWatchlisted) {
+                            Icon(
+                                imageVector = Icons.Filled.Star,
+                                contentDescription = "Remove from watchlist",
+                                tint = Color(0xFFF39C12)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Outlined.StarOutline,
+                                contentDescription = "Add to watchlist",
+                                tint = Color(0xFF738592)
+                            )
+                        }
+                    }
                     SoftBadge(
                         text = signalText(sector.signal),
                         background = signalColor.copy(alpha = 0.14f),
@@ -516,7 +552,7 @@ private fun shortSectorSummary(sector: SectorSignal): String {
         "DOWN" -> "Looks weakening"
         else -> "Looks stable"
     }
-    return "$direction � Confidence ${confidenceLevel(sector.confidence)}"
+    return "$direction | Confidence ${confidenceLevel(sector.confidence)}"
 }
 
 @Composable

@@ -3,6 +3,7 @@ package com.genxsolutions.growwealth.feature.sectors
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.genxsolutions.growwealth.core.ErrorMapper
 import com.genxsolutions.growwealth.data.remote.SectorSignal
 import com.genxsolutions.growwealth.data.remote.SnapshotLatestResponse
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,13 +90,13 @@ class SectorsViewModel(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isRefreshing = false,
-                        errorMessage = error.message ?: "Unable to refresh sectors."
+                        errorMessage = ErrorMapper.toUserMessage(error, "Unable to refresh sectors.")
                     )
                 } else {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isRefreshing = false,
-                        errorMessage = error.message ?: "Unable to load sectors."
+                        errorMessage = ErrorMapper.toUserMessage(error, "Unable to load sectors.")
                     )
                 }
             }
@@ -145,7 +146,7 @@ class SectorsViewModel(
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
                     isLoadingMore = false,
-                    errorMessage = error.message ?: "Unable to load more sectors."
+                    errorMessage = ErrorMapper.toUserMessage(error, "Unable to load more sectors.")
                 )
             }
         }

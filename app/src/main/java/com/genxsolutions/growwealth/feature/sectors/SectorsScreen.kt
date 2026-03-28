@@ -23,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -71,6 +73,8 @@ fun SectorsScreen(
     onLoadMore: () -> Unit,
     onFilterChange: (SectorFilter) -> Unit,
     onSectorClick: (Int) -> Unit,
+    onToggleWatchlist: (SectorSignal) -> Unit,
+    watchlistSectorIds: Set<Int>,
     modifier: Modifier = Modifier
 ) {
     var showFilterDialog by remember { mutableStateOf(false) }
@@ -129,6 +133,8 @@ fun SectorsScreen(
                             hasMore = state.hasMorePages,
                             onLoadMore = onLoadMore,
                             onSectorClick = onSectorClick,
+                            onToggleWatchlist = onToggleWatchlist,
+                            watchlistSectorIds = watchlistSectorIds,
                             totalCount = state.totalCount
                         )
                     }
@@ -156,6 +162,8 @@ private fun SectorsList(
     hasMore: Boolean,
     onLoadMore: () -> Unit,
     onSectorClick: (Int) -> Unit,
+    onToggleWatchlist: (SectorSignal) -> Unit,
+    watchlistSectorIds: Set<Int>,
     totalCount: Int
 ) {
     val listState = rememberLazyListState()
@@ -187,7 +195,12 @@ private fun SectorsList(
         }
 
         items(items) { sector ->
-            SectorCard(sector = sector, onClick = { onSectorClick(sector.sectorId) })
+            SectorCard(
+                sector = sector,
+                isWatchlisted = watchlistSectorIds.contains(sector.sectorId),
+                onWatchlistClick = { onToggleWatchlist(sector) },
+                onClick = { onSectorClick(sector.sectorId) }
+            )
         }
 
         if (isLoadingMore) {
@@ -201,7 +214,12 @@ private fun SectorsList(
 }
 
 @Composable
-private fun SectorCard(sector: SectorSignal, onClick: () -> Unit) {
+private fun SectorCard(
+    sector: SectorSignal,
+    isWatchlisted: Boolean,
+    onWatchlistClick: () -> Unit,
+    onClick: () -> Unit
+) {
     val signalColor = when (sector.signal) {
         "UP" -> upColor
         "DOWN" -> downColor
@@ -242,6 +260,21 @@ private fun SectorCard(sector: SectorSignal, onClick: () -> Unit) {
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f)
                     )
+                    IconButton(onClick = onWatchlistClick) {
+                        if (isWatchlisted) {
+                            Icon(
+                                imageVector = Icons.Filled.Star,
+                                contentDescription = "Remove from watchlist",
+                                tint = Color(0xFFF39C12)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Outlined.StarOutline,
+                                contentDescription = "Add to watchlist",
+                                tint = Color(0xFF738592)
+                            )
+                        }
+                    }
                     SoftBadge(
                         text = signalLabel(sector.signal),
                         background = signalColor.copy(alpha = 0.14f),

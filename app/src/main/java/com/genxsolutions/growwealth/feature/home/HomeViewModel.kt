@@ -3,6 +3,7 @@ package com.genxsolutions.growwealth.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.genxsolutions.growwealth.core.ErrorMapper
 import com.genxsolutions.growwealth.data.remote.HomeSummaryResponse
 import com.genxsolutions.growwealth.data.remote.MarketMood
 import com.genxsolutions.growwealth.data.remote.SectorDetailResponse
@@ -97,13 +98,13 @@ class HomeViewModel(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isRefreshing = false,
-                        errorMessage = error.message ?: "Unable to refresh data."
+                        errorMessage = ErrorMapper.toUserMessage(error, "Unable to refresh data.")
                     )
                 } else {
                     _uiState.value = HomeUiState(
                         isLoading = false,
                         isRefreshing = false,
-                        errorMessage = error.message ?: "Unable to load home data."
+                        errorMessage = ErrorMapper.toUserMessage(error, "Unable to load home data.")
                     )
                 }
             }
@@ -136,7 +137,7 @@ class HomeViewModel(
                 _uiState.value = _uiState.value.copy(
                     selectedSectorDetail = null,
                     isDetailLoading = false,
-                    detailErrorMessage = error.message ?: "Unable to load sector detail."
+                    detailErrorMessage = ErrorMapper.toUserMessage(error, "Unable to load sector detail.")
                 )
             }
         }

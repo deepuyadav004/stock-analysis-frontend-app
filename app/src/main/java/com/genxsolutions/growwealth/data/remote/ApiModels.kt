@@ -95,3 +95,58 @@ data class SectorDetailPoint(
     @SerializedName("sentiment_score") val sentimentScore: Double,
     @SerializedName("article_count") val articleCount: Int
 )
+
+data class InsightsCompareResponse(
+    @SerializedName("has_data") val hasData: Boolean,
+    @SerializedName("snapshot_date") val snapshotDate: String?,
+    @SerializedName("days") val days: Int,
+    @SerializedName("market") val market: InsightsMarket?,
+    @SerializedName("leaders") val leaders: InsightsLeaders?
+)
+
+data class InsightsMarket(
+    @SerializedName("up_count") val upCount: Int,
+    @SerializedName("down_count") val downCount: Int,
+    @SerializedName("neutral_count") val neutralCount: Int,
+    @SerializedName("total_sectors") val totalSectors: Int,
+    @SerializedName("avg_confidence") val avgConfidence: Double,
+    @SerializedName("avg_sentiment") val avgSentiment: Double,
+    @SerializedName("sentiment_change_vs_previous") val sentimentChangeVsPrevious: Double
+)
+
+data class InsightsLeaders(
+    @SerializedName("strongest") val strongest: InsightsLeaderItem?,
+    @SerializedName("weakest") val weakest: InsightsLeaderItem?
+)
+
+data class InsightsLeaderItem(
+    @SerializedName("sector_id") val sectorId: Int,
+    @SerializedName("sector_name") val sectorName: String,
+    @SerializedName("avg_sentiment") val avgSentiment: Double,
+    @SerializedName("avg_confidence") val avgConfidence: Double
+)
+
+data class InsightsStabilityResponse(
+    @SerializedName("has_data") val hasData: Boolean,
+    @SerializedName("snapshot_date") val snapshotDate: String?,
+    @SerializedName("days") val days: Int,
+    @SerializedName("summary") val summary: InsightsStabilitySummary?,
+    @SerializedName("items") val items: List<InsightsStabilityItem>
+)
+
+data class InsightsStabilitySummary(
+    @SerializedName("stable_sector_count") val stableSectorCount: Int,
+    @SerializedName("total_sectors") val totalSectors: Int,
+    @SerializedName("avg_stability_ratio") val avgStabilityRatio: Double,
+    @SerializedName("avg_confidence") val avgConfidence: Double
+)
+
+data class InsightsStabilityItem(
+    @SerializedName("sector_id") val sectorId: Int,
+    @SerializedName("sector_name") val sectorName: String,
+    @SerializedName("latest_signal") val latestSignal: String,
+    @SerializedName("total_days") val totalDays: Int,
+    @SerializedName("flips") val flips: Int,
+    @SerializedName("stability_ratio") val stabilityRatio: Double,
+    @SerializedName("avg_confidence") val avgConfidence: Double
+)

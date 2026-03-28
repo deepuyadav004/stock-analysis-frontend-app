@@ -18,17 +18,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.genxsolutions.growwealth.data.local.LocalDatabaseModule
 import com.genxsolutions.growwealth.data.remote.NetworkModule
 import com.genxsolutions.growwealth.feature.home.HomeRepository
 import com.genxsolutions.growwealth.feature.home.HomeScreen
 import com.genxsolutions.growwealth.feature.home.HomeViewModel
+import com.genxsolutions.growwealth.feature.insights.InsightsRepository
+import com.genxsolutions.growwealth.feature.insights.InsightsScreen
+import com.genxsolutions.growwealth.feature.insights.InsightsViewModel
 import com.genxsolutions.growwealth.feature.sectors.SectorsRepository
 import com.genxsolutions.growwealth.feature.sectors.SectorsScreen
 import com.genxsolutions.growwealth.feature.sectors.SectorsViewModel
+import com.genxsolutions.growwealth.feature.watchlist.WatchlistRepository
+import com.genxsolutions.growwealth.feature.watchlist.WatchlistScreen
+import com.genxsolutions.growwealth.feature.watchlist.WatchlistViewModel
 
 enum class AppTab(val label: String) {
     Home("Home"),
@@ -40,6 +48,14 @@ enum class AppTab(val label: String) {
 @Composable
 fun GrowWealthApp() {
     var currentTab by remember { mutableStateOf(AppTab.Home) }
+    val context = LocalContext.current
+    val watchlistViewModel: WatchlistViewModel = viewModel(
+        factory = WatchlistViewModel.Factory(
+            WatchlistRepository(LocalDatabaseModule.database(context).watchlistSectorDao())
+        )
+    )
+    val watchlistState by watchlistViewModel.uiState.collectAsState()
+    val watchlistSectorIds by watchlistViewModel.watchlistSectorIds.collectAsState()
 
     MaterialTheme {
         Scaffold(
@@ -77,6 +93,8 @@ fun GrowWealthApp() {
                         state = state,
                         onRetry = homeViewModel::refresh,
                         onSectorClick = homeViewModel::openSectorDetail,
+                        onToggleWatchlist = watchlistViewModel::toggleSector,
+                        watchlistSectorIds = watchlistSectorIds,
                         onCloseDetail = homeViewModel::closeSectorDetail,
                         modifier = Modifier.padding(innerPadding)
                     )
@@ -93,14 +111,28 @@ fun GrowWealthApp() {
                         onLoadMore = sectorsViewModel::loadMore,
                         onFilterChange = sectorsViewModel::updateFilter,
                         onSectorClick = { /* TODO: navigate to sector detail or use shared detail modal */ },
+                        onToggleWatchlist = watchlistViewModel::toggleSector,
+                        watchlistSectorIds = watchlistSectorIds,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
 
-                AppTab.Insights,
+                AppTab.Insights -> {
+                    val insightsViewModel: InsightsViewModel = viewModel(
+                        factory = InsightsViewModel.Factory(InsightsRepository(NetworkModule.api))
+                    )
+                    val state by insightsViewModel.uiState.collectAsState()
+                    InsightsScreen(
+                        state = state,
+                        onRefresh = insightsViewModel::load,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+
                 AppTab.Watchlist -> {
-                    PlaceholderScreen(
-                        title = currentTab.label,
+                    WatchlistScreen(
+                        state = watchlistState,
+                        onRemove = watchlistViewModel::removeSector,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
