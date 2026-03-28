@@ -150,3 +150,52 @@ data class InsightsStabilityItem(
     @SerializedName("stability_ratio") val stabilityRatio: Double,
     @SerializedName("avg_confidence") val avgConfidence: Double
 )
+
+data class CompanyListResponse(
+    @SerializedName("has_data") val hasData: Boolean,
+    @SerializedName("pagination") val pagination: Pagination,
+    @SerializedName("items") val items: List<CompanyListItem>
+)
+
+data class CompanyListItem(
+    @SerializedName("company_id") val companyId: Int,
+    @SerializedName("company_name") val companyName: String,
+    @SerializedName("ticker") val ticker: String,
+    @SerializedName("exchange_code") val exchangeCode: String,
+    @SerializedName("latest_date") val latestDate: String?,
+    @SerializedName("latest_close") val latestClose: Double,
+    @SerializedName("day_change_pct") val dayChangePct: Double,
+    @SerializedName("signal") val signal: String
+)
+
+data class CompanySummaryResponse(
+    @SerializedName("has_data") val hasData: Boolean,
+    @SerializedName("company_id") val companyId: Int,
+    @SerializedName("company_name") val companyName: String,
+    @SerializedName("ticker") val ticker: String,
+    @SerializedName("exchange_code") val exchangeCode: String,
+    @SerializedName("latest_close") val latestClose: Double,
+    @SerializedName("latest_date") val latestDate: String?,
+    @SerializedName("day_change") val dayChange: Double,
+    @SerializedName("day_change_pct") val dayChangePct: Double
+)
+
+data class CompanyPerformanceResponse(
+    @SerializedName("has_data") val hasData: Boolean,
+    @SerializedName("company_id") val companyId: Int,
+    @SerializedName("company_name") val companyName: String,
+    @SerializedName("ticker") val ticker: String,
+    @SerializedName("exchange_code") val exchangeCode: String,
+    @SerializedName("range") val range: String,
+    @SerializedName("from_date") val fromDate: String?,
+    @SerializedName("to_date") val toDate: String?,
+    @SerializedName("points") val points: List<CompanyPerformancePoint>,
+    @SerializedName("period_change") val periodChange: Double,
+    @SerializedName("period_change_pct") val periodChangePct: Double
+)
+
+data class CompanyPerformancePoint(
+    @SerializedName("date") val date: String,
+    @SerializedName("close") val close: Double,
+    @SerializedName("volume") val volume: Int
+)

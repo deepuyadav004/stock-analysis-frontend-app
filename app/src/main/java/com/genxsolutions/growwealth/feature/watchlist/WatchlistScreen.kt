@@ -37,7 +37,7 @@ fun WatchlistScreen(
         when {
             state.items.isEmpty() -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Your watchlist is empty. Add sectors from Home or Sectors tab.")
+                    Text("Your watchlist is empty. Add sectors from Home.")
                 }
             }
 

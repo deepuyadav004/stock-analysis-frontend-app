@@ -2,9 +2,8 @@ package com.genxsolutions.growwealth.app.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Insights
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,23 +24,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.genxsolutions.growwealth.data.local.LocalDatabaseModule
 import com.genxsolutions.growwealth.data.remote.NetworkModule
+import com.genxsolutions.growwealth.feature.companies.CompaniesRepository
+import com.genxsolutions.growwealth.feature.companies.CompaniesScreen
+import com.genxsolutions.growwealth.feature.companies.CompaniesViewModel
 import com.genxsolutions.growwealth.feature.home.HomeRepository
 import com.genxsolutions.growwealth.feature.home.HomeScreen
 import com.genxsolutions.growwealth.feature.home.HomeViewModel
-import com.genxsolutions.growwealth.feature.insights.InsightsRepository
-import com.genxsolutions.growwealth.feature.insights.InsightsScreen
-import com.genxsolutions.growwealth.feature.insights.InsightsViewModel
-import com.genxsolutions.growwealth.feature.sectors.SectorsRepository
-import com.genxsolutions.growwealth.feature.sectors.SectorsScreen
-import com.genxsolutions.growwealth.feature.sectors.SectorsViewModel
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistRepository
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistScreen
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistViewModel
 
 enum class AppTab(val label: String) {
     Home("Home"),
-    Sectors("Sectors"),
-    Insights("Insights"),
+    Companies("Companies"),
     Watchlist("Watchlist")
 }
 
@@ -72,8 +67,7 @@ fun GrowWealthApp() {
                             icon = {
                                 when (tab) {
                                     AppTab.Home -> Icon(Icons.Default.Home, contentDescription = tab.label)
-                                    AppTab.Sectors -> Icon(Icons.Default.List, contentDescription = tab.label)
-                                    AppTab.Insights -> Icon(Icons.Default.Insights, contentDescription = tab.label)
+                                    AppTab.Companies -> Icon(Icons.Default.Business, contentDescription = tab.label)
                                     AppTab.Watchlist -> Icon(Icons.Default.Star, contentDescription = tab.label)
                                 }
                             },
@@ -100,31 +94,21 @@ fun GrowWealthApp() {
                     )
                 }
 
-                AppTab.Sectors -> {
-                    val sectorsViewModel: SectorsViewModel = viewModel(
-                        factory = SectorsViewModel.Factory(SectorsRepository(NetworkModule.api))
+                AppTab.Companies -> {
+                    val companiesViewModel: CompaniesViewModel = viewModel(
+                        factory = CompaniesViewModel.Factory(CompaniesRepository(NetworkModule.api))
                     )
-                    val state by sectorsViewModel.uiState.collectAsState()
-                    SectorsScreen(
+                    val state by companiesViewModel.uiState.collectAsState()
+                    CompaniesScreen(
                         state = state,
-                        onRefresh = sectorsViewModel::refresh,
-                        onLoadMore = sectorsViewModel::loadMore,
-                        onFilterChange = sectorsViewModel::updateFilter,
-                        onSectorClick = { /* TODO: navigate to sector detail or use shared detail modal */ },
-                        onToggleWatchlist = watchlistViewModel::toggleSector,
-                        watchlistSectorIds = watchlistSectorIds,
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-
-                AppTab.Insights -> {
-                    val insightsViewModel: InsightsViewModel = viewModel(
-                        factory = InsightsViewModel.Factory(InsightsRepository(NetworkModule.api))
-                    )
-                    val state by insightsViewModel.uiState.collectAsState()
-                    InsightsScreen(
-                        state = state,
-                        onRefresh = insightsViewModel::load,
+                        onRefresh = companiesViewModel::refresh,
+                        onLoadMore = companiesViewModel::loadMore,
+                        onQueryChange = companiesViewModel::updateQuery,
+                        onApplySearch = companiesViewModel::applySearch,
+                        onSignalFilter = companiesViewModel::applyFilter,
+                        onCompanyClick = companiesViewModel::openCompany,
+                        onSelectRange = companiesViewModel::selectRange,
+                        onCloseDetail = companiesViewModel::closeDetail,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -139,12 +123,4 @@ fun GrowWealthApp() {
             }
         }
     }
-}
-
-@Composable
-private fun PlaceholderScreen(title: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "$title screen will be implemented in next chunks.",
-        modifier = modifier.padding(24.dp)
-    )
 }

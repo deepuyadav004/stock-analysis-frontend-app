@@ -5,6 +5,9 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+val debugApiBaseUrl = (project.findProperty("DEBUG_API_BASE_URL") as String?)
+    ?: "https://d9vmnjdd-8000.inc1.devtunnels.ms/"
+
 android {
     namespace = "com.genxsolutions.growwealth"
     compileSdk {
@@ -26,7 +29,7 @@ android {
             buildConfigField(
                 "String",
                 "API_BASE_URL",
-                "\"https://d9vmnjdd-8000.inc1.devtunnels.ms/\""
+                "\"$debugApiBaseUrl\""
             )
         }
         release {

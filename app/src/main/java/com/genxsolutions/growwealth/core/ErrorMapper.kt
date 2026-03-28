@@ -1,7 +1,9 @@
 package com.genxsolutions.growwealth.core
 
 import java.io.IOException
+import java.net.ConnectException
 import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import retrofit2.HttpException
 
 object ErrorMapper {
@@ -9,7 +11,8 @@ object ErrorMapper {
         if (error == null) return fallback
 
         return when (error) {
-            is SocketTimeoutException -> "Request timed out. Pull to refresh and try again."
+            is SocketTimeoutException -> "Request timed out. If using a tunnel URL, restart it or switch to local API host."
+            is UnknownHostException, is ConnectException -> "Cannot reach backend. Check API base URL and server status."
             is IOException -> "Network unavailable. Check connection and try again."
             is HttpException -> mapHttpCode(error.code(), fallback)
             else -> error.message?.takeIf { it.isNotBlank() } ?: fallback

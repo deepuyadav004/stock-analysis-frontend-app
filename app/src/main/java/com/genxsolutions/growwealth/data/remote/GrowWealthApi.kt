@@ -47,4 +47,24 @@ interface GrowWealthApi {
         @Query("date") date: String? = null,
         @Query("days") days: Int = 30
     ): InsightsStabilityResponse
+
+    @GET("v1/companies/list")
+    suspend fun getCompaniesList(
+        @Query("query") query: String? = null,
+        @Query("signal") signal: String? = null,
+        @Query("limit") limit: Int = 20,
+        @Query("offset") offset: Int = 0,
+        @Query("sort") sort: String = "name_asc"
+    ): CompanyListResponse
+
+    @GET("v1/companies/{companyId}/summary")
+    suspend fun getCompanySummary(
+        @Path("companyId") companyId: Int
+    ): CompanySummaryResponse
+
+    @GET("v1/companies/{companyId}/performance")
+    suspend fun getCompanyPerformance(
+        @Path("companyId") companyId: Int,
+        @Query("range") range: String
+    ): CompanyPerformanceResponse
 }

@@ -7,7 +7,7 @@ Provide HTTP client integration for backend APIs.
 Centralizes API definitions, DTOs, and Retrofit setup for the app.
 
 3. File Responsibilities
-- GrowWealthApi.kt: Retrofit endpoint interface for Chunk 1-4 endpoints.
+- GrowWealthApi.kt: Retrofit endpoint interface for home, sectors, insights, and companies endpoints.
 - ApiModels.kt: DTO models for backend responses.
 - NetworkModule.kt: Retrofit/OkHttp client construction with timeout and slow-request instrumentation.
 
@@ -18,7 +18,7 @@ Centralizes API definitions, DTOs, and Retrofit setup for the app.
 4. DTOs are returned to feature layer.
 
 5. Interactions
-- Used by feature/home, feature/sectors, and feature/insights repositories.
+- Used by feature/home, feature/sectors, feature/insights, and feature/companies repositories.
 - Depends on backend endpoints under /v1.
 
 6. Assumptions
