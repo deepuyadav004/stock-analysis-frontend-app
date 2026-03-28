@@ -1,20 +1,30 @@
 package com.genxsolutions.growwealth.feature.watchlist
 
+import com.genxsolutions.growwealth.data.local.WatchlistCompanyDao
+import com.genxsolutions.growwealth.data.local.WatchlistCompanyEntity
 import com.genxsolutions.growwealth.data.local.WatchlistSectorDao
 import com.genxsolutions.growwealth.data.local.WatchlistSectorEntity
+import com.genxsolutions.growwealth.data.remote.CompanyListItem
 import com.genxsolutions.growwealth.data.remote.SectorSignal
 import kotlinx.coroutines.flow.Flow
 
-class WatchlistRepository(private val dao: WatchlistSectorDao) {
-    fun observeItems(): Flow<List<WatchlistSectorEntity>> = dao.observeAll()
+class WatchlistRepository(
+    private val sectorDao: WatchlistSectorDao,
+    private val companyDao: WatchlistCompanyDao,
+) {
+    fun observeSectorItems(): Flow<List<WatchlistSectorEntity>> = sectorDao.observeAll()
 
-    fun observeSectorIds(): Flow<List<Int>> = dao.observeSectorIds()
+    fun observeSectorIds(): Flow<List<Int>> = sectorDao.observeSectorIds()
+
+    fun observeCompanyItems(): Flow<List<WatchlistCompanyEntity>> = companyDao.observeAll()
+
+    fun observeCompanyIds(): Flow<List<Int>> = companyDao.observeCompanyIds()
 
     suspend fun toggle(sector: SectorSignal) {
-        if (dao.exists(sector.sectorId)) {
-            dao.deleteById(sector.sectorId)
+        if (sectorDao.exists(sector.sectorId)) {
+            sectorDao.deleteById(sector.sectorId)
         } else {
-            dao.upsert(
+            sectorDao.upsert(
                 WatchlistSectorEntity(
                     sectorId = sector.sectorId,
                     sectorName = sector.sectorName,
@@ -27,7 +37,29 @@ class WatchlistRepository(private val dao: WatchlistSectorDao) {
         }
     }
 
+    suspend fun toggle(company: CompanyListItem) {
+        if (companyDao.exists(company.companyId)) {
+            companyDao.deleteById(company.companyId)
+        } else {
+            companyDao.upsert(
+                WatchlistCompanyEntity(
+                    companyId = company.companyId,
+                    companyName = company.companyName,
+                    ticker = company.ticker,
+                    exchangeCode = company.exchangeCode,
+                    latestClose = company.latestClose,
+                    dayChangePct = company.dayChangePct,
+                    latestDate = company.latestDate
+                )
+            )
+        }
+    }
+
     suspend fun remove(sectorId: Int) {
-        dao.deleteById(sectorId)
+        sectorDao.deleteById(sectorId)
+    }
+
+    suspend fun removeCompany(companyId: Int) {
+        companyDao.deleteById(companyId)
     }
 }

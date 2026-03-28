@@ -4,10 +4,11 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [WatchlistSectorEntity::class],
-    version = 1,
+    entities = [WatchlistSectorEntity::class, WatchlistCompanyEntity::class],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun watchlistSectorDao(): WatchlistSectorDao
+    abstract fun watchlistCompanyDao(): WatchlistCompanyDao
 }

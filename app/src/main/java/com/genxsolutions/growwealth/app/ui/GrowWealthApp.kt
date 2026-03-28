@@ -46,11 +46,15 @@ fun GrowWealthApp() {
     val context = LocalContext.current
     val watchlistViewModel: WatchlistViewModel = viewModel(
         factory = WatchlistViewModel.Factory(
-            WatchlistRepository(LocalDatabaseModule.database(context).watchlistSectorDao())
+            WatchlistRepository(
+                LocalDatabaseModule.database(context).watchlistSectorDao(),
+                LocalDatabaseModule.database(context).watchlistCompanyDao()
+            )
         )
     )
     val watchlistState by watchlistViewModel.uiState.collectAsState()
     val watchlistSectorIds by watchlistViewModel.watchlistSectorIds.collectAsState()
+    val watchlistCompanyIds by watchlistViewModel.watchlistCompanyIds.collectAsState()
 
     MaterialTheme {
         Scaffold(
@@ -107,6 +111,8 @@ fun GrowWealthApp() {
                         onApplySearch = companiesViewModel::applySearch,
                         onSignalFilter = companiesViewModel::applyFilter,
                         onCompanyClick = companiesViewModel::openCompany,
+                        onToggleWatchlist = watchlistViewModel::toggleCompany,
+                        watchlistCompanyIds = watchlistCompanyIds,
                         onSelectRange = companiesViewModel::selectRange,
                         onCloseDetail = companiesViewModel::closeDetail,
                         modifier = Modifier.padding(innerPadding)
@@ -116,7 +122,8 @@ fun GrowWealthApp() {
                 AppTab.Watchlist -> {
                     WatchlistScreen(
                         state = watchlistState,
-                        onRemove = watchlistViewModel::removeSector,
+                        onRemoveSector = watchlistViewModel::removeSector,
+                        onRemoveCompany = watchlistViewModel::removeCompany,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }

@@ -25,6 +25,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -75,6 +77,8 @@ fun CompaniesScreen(
     onApplySearch: () -> Unit,
     onSignalFilter: (String?) -> Unit,
     onCompanyClick: (Int) -> Unit,
+    onToggleWatchlist: (CompanyListItem) -> Unit,
+    watchlistCompanyIds: Set<Int>,
     onSelectRange: (String) -> Unit,
     onCloseDetail: () -> Unit,
     modifier: Modifier = Modifier
@@ -137,7 +141,9 @@ fun CompaniesScreen(
                             hasMore = state.hasMore,
                             isLoadingMore = state.isLoadingMore,
                             onLoadMore = onLoadMore,
-                            onCompanyClick = onCompanyClick
+                            onCompanyClick = onCompanyClick,
+                            onToggleWatchlist = onToggleWatchlist,
+                            watchlistCompanyIds = watchlistCompanyIds
                         )
                     }
                 }
@@ -201,7 +207,9 @@ private fun CompaniesList(
     hasMore: Boolean,
     isLoadingMore: Boolean,
     onLoadMore: () -> Unit,
-    onCompanyClick: (Int) -> Unit
+    onCompanyClick: (Int) -> Unit,
+    onToggleWatchlist: (CompanyListItem) -> Unit,
+    watchlistCompanyIds: Set<Int>
 ) {
     val listState = rememberLazyListState()
     val isNearBottom by remember {
@@ -232,7 +240,12 @@ private fun CompaniesList(
         }
 
         items(items) { company ->
-            CompanyRow(company = company, onClick = { onCompanyClick(company.companyId) })
+            CompanyRow(
+                company = company,
+                isWatchlisted = watchlistCompanyIds.contains(company.companyId),
+                onWatchlistClick = { onToggleWatchlist(company) },
+                onClick = { onCompanyClick(company.companyId) }
+            )
         }
 
         if (isLoadingMore) {
@@ -246,7 +259,12 @@ private fun CompaniesList(
 }
 
 @Composable
-private fun CompanyRow(company: CompanyListItem, onClick: () -> Unit) {
+private fun CompanyRow(
+    company: CompanyListItem,
+    isWatchlisted: Boolean,
+    onWatchlistClick: () -> Unit,
+    onClick: () -> Unit
+) {
     val signalColor = when (company.signal) {
         "UP" -> upColor
         "DOWN" -> downColor
@@ -292,6 +310,22 @@ private fun CompanyRow(company: CompanyListItem, onClick: () -> Unit) {
                         color = Color(0xFF4C6475),
                         style = MaterialTheme.typography.labelMedium
                     )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    IconButton(onClick = onWatchlistClick) {
+                        if (isWatchlisted) {
+                            Icon(
+                                imageVector = Icons.Filled.Star,
+                                contentDescription = "Remove from watchlist",
+                                tint = Color(0xFFF39C12)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Outlined.StarOutline,
+                                contentDescription = "Add to watchlist",
+                                tint = Color(0xFF738592)
+                            )
+                        }
+                    }
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Close", color = Color(0xFF4B5B67), style = MaterialTheme.typography.bodySmall)

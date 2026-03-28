@@ -12,16 +12,16 @@ Defines stable navigation shell so feature screens can be delivered incrementall
 4. Step-by-Step Flow
 1. App launches MainActivity.
 2. GrowWealthApp renders scaffold.
-3. Shared WatchlistViewModel initializes and observes local Room watchlist state.
+3. Shared WatchlistViewModel initializes and observes local Room watchlist state for sectors and companies.
 4. User switches tabs.
 5. Home tab initializes Home ViewModel and renders Home feature.
-6. Companies tab initializes Companies ViewModel and supports search/filter/pagination and detail ranges.
+6. Companies tab initializes Companies ViewModel and supports search/filter/pagination/detail ranges with company watchlist toggles.
 7. Watchlist tab renders saved sectors from local Room storage.
 
 5. Interactions
 - Uses feature/home module for Home tab.
 - Uses feature/companies module for Companies tab.
-- Uses feature/watchlist + data/local modules for watchlist persistence and tab rendering.
+- Uses feature/watchlist + data/local modules for sector/company watchlist persistence and tab rendering.
 
 6. Assumptions
 - Bottom navigation is intentionally kept to three sections for focused flow.
