@@ -42,6 +42,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -105,9 +111,7 @@ fun CompaniesScreen(
             ) {
                 when {
                     state.isLoading && state.items.isEmpty() -> {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Loading companies...")
-                        }
+                        CompaniesLoadingPlaceholder()
                     }
 
                     state.errorMessage != null && state.items.isEmpty() -> {
@@ -162,6 +166,73 @@ fun CompaniesScreen(
                 onSelectRange = onSelectRange,
                 onClose = onCloseDetail
             )
+        }
+    }
+}
+
+@Composable
+private fun CompaniesLoadingPlaceholder() {
+    val pulse = rememberInfiniteTransition(label = "companies-loader")
+    val animatedAlpha = pulse.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0.95f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "companies-loader-alpha"
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        repeat(6) { index ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth((0.52f + index * 0.06f).coerceAtMost(0.88f))
+                            .height(14.dp)
+                            .background(
+                                Color(0xFFCFDBE9).copy(alpha = animatedAlpha.value),
+                                RoundedCornerShape(7.dp)
+                            )
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .width(72.dp)
+                                .height(10.dp)
+                                .background(
+                                    Color(0xFFDEE7F1).copy(alpha = animatedAlpha.value),
+                                    RoundedCornerShape(7.dp)
+                                )
+                        )
+                        Box(
+                            modifier = Modifier
+                                .width(88.dp)
+                                .height(10.dp)
+                                .background(
+                                    Color(0xFFDEE7F1).copy(alpha = animatedAlpha.value),
+                                    RoundedCornerShape(7.dp)
+                                )
+                        )
+                    }
+                }
+            }
         }
     }
 }

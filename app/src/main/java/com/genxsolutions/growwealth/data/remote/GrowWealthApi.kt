@@ -1,5 +1,7 @@
 package com.genxsolutions.growwealth.data.remote
 
+import com.genxsolutions.growwealth.feature.ideas.data.dto.IdeaDetailResponseDto
+import com.genxsolutions.growwealth.feature.ideas.data.dto.IdeasListResponseDto
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -67,4 +69,17 @@ interface GrowWealthApi {
         @Path("companyId") companyId: Int,
         @Query("range") range: String
     ): CompanyPerformanceResponse
+
+    @GET("v1/ideas/list")
+    suspend fun getIdeasList(
+        @Query("source") source: String? = null,
+        @Query("call_type") callType: String? = null,
+        @Query("limit") limit: Int = 20,
+        @Query("offset") offset: Int = 0
+    ): IdeasListResponseDto
+
+    @GET("v1/ideas/{ideaId}")
+    suspend fun getIdeaDetail(
+        @Path("ideaId") ideaId: Int
+    ): IdeaDetailResponseDto
 }

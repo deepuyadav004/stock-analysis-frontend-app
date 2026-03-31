@@ -33,6 +33,12 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,7 +72,7 @@ fun HomeScreen(
 ) {
     when {
         state.isLoading && state.sectors.isEmpty() -> {
-            CenterMessage(modifier = modifier, title = "Loading snapshot...")
+            HomeLoadingPlaceholder(modifier = modifier)
         }
 
         state.errorMessage != null && state.sectors.isEmpty() -> {
@@ -99,6 +105,64 @@ fun HomeScreen(
                 onCloseDetail = onCloseDetail,
                 modifier = modifier
             )
+        }
+    }
+}
+
+@Composable
+private fun HomeLoadingPlaceholder(modifier: Modifier = Modifier) {
+    val pulse = rememberInfiniteTransition(label = "home-loader")
+    val animatedAlpha = pulse.animateFloat(
+        initialValue = 0.45f,
+        targetValue = 0.95f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 950, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "home-loader-alpha"
+    )
+
+    Surface(modifier = modifier.fillMaxSize(), color = homeBackground) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            repeat(4) { index ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.86f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth((0.55f + index * 0.08f).coerceAtMost(0.9f))
+                                .height(14.dp)
+                                .background(
+                                    Color(0xFFCAD7E5).copy(alpha = animatedAlpha.value),
+                                    RoundedCornerShape(8.dp)
+                                )
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.35f)
+                                .height(10.dp)
+                                .background(
+                                    Color(0xFFD8E2EE).copy(alpha = animatedAlpha.value),
+                                    RoundedCornerShape(8.dp)
+                                )
+                        )
+                    }
+                }
+            }
         }
     }
 }

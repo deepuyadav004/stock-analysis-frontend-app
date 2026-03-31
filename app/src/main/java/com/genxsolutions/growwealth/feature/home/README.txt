@@ -10,12 +10,14 @@ Shows freshness, market mood, and top sector signals using non-real-time backend
 - HomeViewModel.kt: Orchestrates Home data loading and UI state.
 - HomeRepository.kt: Fetches Home APIs.
 - HomeScreen.kt: Composable UI with loading/error/empty/data states.
+- HomeScreen.kt: Composable UI with animated skeleton loading, error/empty fallbacks, and full data state cards.
 
 4. Step-by-Step Flow
 1. ViewModel starts refresh.
 2. Repository calls snapshot/latest, home/summary, sectors/signals.
 3. UI state updates.
 4. Composable renders cards/list or fallback states.
+5. Initial loading now uses animated placeholder cards (no plain loading text) for better perceived responsiveness.
 
 5. Interactions
 - Uses data/remote API and models.

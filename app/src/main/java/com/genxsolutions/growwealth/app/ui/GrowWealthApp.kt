@@ -1,10 +1,12 @@
 package com.genxsolutions.growwealth.app.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -27,9 +29,13 @@ import com.genxsolutions.growwealth.data.remote.NetworkModule
 import com.genxsolutions.growwealth.feature.companies.CompaniesRepository
 import com.genxsolutions.growwealth.feature.companies.CompaniesScreen
 import com.genxsolutions.growwealth.feature.companies.CompaniesViewModel
+import com.genxsolutions.growwealth.feature.ideas.domain.CallType
 import com.genxsolutions.growwealth.feature.home.HomeRepository
 import com.genxsolutions.growwealth.feature.home.HomeScreen
 import com.genxsolutions.growwealth.feature.home.HomeViewModel
+import com.genxsolutions.growwealth.feature.ideas.IdeasRepository
+import com.genxsolutions.growwealth.feature.ideas.IdeasScreen
+import com.genxsolutions.growwealth.feature.ideas.IdeasViewModel
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistRepository
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistScreen
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistViewModel
@@ -37,6 +43,7 @@ import com.genxsolutions.growwealth.feature.watchlist.WatchlistViewModel
 enum class AppTab(val label: String) {
     Home("Home"),
     Companies("Companies"),
+    Ideas("Ideas"),
     Watchlist("Watchlist")
 }
 
@@ -72,6 +79,7 @@ fun GrowWealthApp() {
                                 when (tab) {
                                     AppTab.Home -> Icon(Icons.Default.Home, contentDescription = tab.label)
                                     AppTab.Companies -> Icon(Icons.Default.Business, contentDescription = tab.label)
+                                    AppTab.Ideas -> Icon(Icons.Default.TrendingUp, contentDescription = tab.label)
                                     AppTab.Watchlist -> Icon(Icons.Default.Star, contentDescription = tab.label)
                                 }
                             },
@@ -122,6 +130,45 @@ fun GrowWealthApp() {
                         state = watchlistState,
                         onRemoveSector = watchlistViewModel::removeSector,
                         onRemoveCompany = watchlistViewModel::removeCompany,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+
+                AppTab.Ideas -> {
+                    val ideasViewModel: IdeasViewModel = viewModel(
+                        factory = IdeasViewModel.Factory(IdeasRepository(NetworkModule.api))
+                    )
+                    val state by ideasViewModel.uiState.collectAsState()
+                    IdeasScreen(
+                        state = state,
+                        onRefresh = ideasViewModel::refresh,
+                        onLoadMore = ideasViewModel::loadMore,
+                        onSelectCallType = ideasViewModel::selectCallType,
+                        onIdeaClick = ideasViewModel::openIdea,
+                        onSaveToWatchlist = { idea ->
+                            // Use a stable negative id to avoid collision with API company ids.
+                            val hash = idea.ticker.uppercase().hashCode()
+                            val stableId = if (hash == Int.MIN_VALUE) Int.MAX_VALUE else kotlin.math.abs(hash)
+                            watchlistViewModel.toggleCompany(
+                                com.genxsolutions.growwealth.data.remote.CompanyListItem(
+                                    companyId = -(stableId + 1),
+                                    companyName = idea.companyName,
+                                    ticker = idea.ticker,
+                                    exchangeCode = "NSE",
+                                    latestDate = idea.recommendationDate,
+                                    latestClose = idea.targetPrice ?: 0.0,
+                                    dayChangePct = 0.0,
+                                    signal = when (idea.callType) {
+                                        CallType.BUY -> "BUY"
+                                        CallType.SELL -> "SELL"
+                                        CallType.HOLD -> "HOLD"
+                                        CallType.UNKNOWN -> "UNKNOWN"
+                                    }
+                                )
+                            )
+                            Toast.makeText(context, "Saved to Watchlist", Toast.LENGTH_SHORT).show()
+                        },
+                        onCloseDetail = ideasViewModel::closeDetail,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
