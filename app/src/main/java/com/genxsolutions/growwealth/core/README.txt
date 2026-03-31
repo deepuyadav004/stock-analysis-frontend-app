@@ -8,6 +8,7 @@ Centralizes cross-cutting logic so feature modules stay focused on business/UI b
 
 3. File Responsibilities
 - ErrorMapper.kt: Converts technical exceptions (timeout/network/http) into user-friendly messages.
+- SkeletonListLoader.kt: Reusable animated skeleton list placeholder used by feature screens during initial loading.
 
 4. Step-by-Step Flow
 1. Feature ViewModel catches an exception.
@@ -15,7 +16,8 @@ Centralizes cross-cutting logic so feature modules stay focused on business/UI b
 3. UI receives standardized, user-readable error text.
 
 5. Interactions
-- Used by Home, Sectors, Insights, and Watchlist ViewModels.
+- ErrorMapper is used by Home, Sectors, Insights, and Watchlist ViewModels.
+- SkeletonListLoader is used by Home, Companies, and Ideas UI screens.
 
 6. Assumptions
 - Network and backend errors can be mapped by HTTP code or exception type.
@@ -23,3 +25,4 @@ Centralizes cross-cutting logic so feature modules stay focused on business/UI b
 7. Future Improvements
 - Add analytics error categories for monitoring.
 - Add localization support for user messages.
+- Add theme-aware skeleton colors (light/dark) through centralized UI tokens.

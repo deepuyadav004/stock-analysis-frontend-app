@@ -33,18 +33,13 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.genxsolutions.growwealth.core.SkeletonListLoader
 import com.genxsolutions.growwealth.data.remote.SectorDetailResponse
 import com.genxsolutions.growwealth.data.remote.SectorSignal
 import com.genxsolutions.growwealth.data.remote.SectorTrend
@@ -111,59 +106,21 @@ fun HomeScreen(
 
 @Composable
 private fun HomeLoadingPlaceholder(modifier: Modifier = Modifier) {
-    val pulse = rememberInfiniteTransition(label = "home-loader")
-    val animatedAlpha = pulse.animateFloat(
-        initialValue = 0.45f,
-        targetValue = 0.95f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 950, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "home-loader-alpha"
-    )
-
     Surface(modifier = modifier.fillMaxSize(), color = homeBackground) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            repeat(4) { index ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.86f)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth((0.55f + index * 0.08f).coerceAtMost(0.9f))
-                                .height(14.dp)
-                                .background(
-                                    Color(0xFFCAD7E5).copy(alpha = animatedAlpha.value),
-                                    RoundedCornerShape(8.dp)
-                                )
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(0.35f)
-                                .height(10.dp)
-                                .background(
-                                    Color(0xFFD8E2EE).copy(alpha = animatedAlpha.value),
-                                    RoundedCornerShape(8.dp)
-                                )
-                        )
-                    }
-                }
-            }
-        }
+        SkeletonListLoader(
+            itemCount = 4,
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+            verticalSpacing = 12.dp,
+            cardShape = RoundedCornerShape(18.dp),
+            cardColor = Color.White.copy(alpha = 0.86f),
+            titleWidthStart = 0.55f,
+            titleWidthStep = 0.08f,
+            metaBlockWidths = listOf(120.dp),
+            placeholderColorPrimary = Color(0xFFCAD7E5),
+            placeholderColorSecondary = Color(0xFFD8E2EE),
+            pulseMinAlpha = 0.45f,
+            pulseDurationMs = 950
+        )
     }
 }
 

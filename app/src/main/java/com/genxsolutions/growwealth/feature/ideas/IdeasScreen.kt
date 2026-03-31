@@ -25,11 +25,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -57,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.genxsolutions.growwealth.core.SkeletonListLoader
 import com.genxsolutions.growwealth.feature.ideas.domain.CallType
 import com.genxsolutions.growwealth.feature.ideas.domain.Idea
 import kotlinx.coroutines.flow.collectLatest
@@ -257,70 +253,15 @@ fun IdeasScreen(
 
 @Composable
 private fun IdeasLoadingPlaceholder() {
-    val pulse = rememberInfiniteTransition(label = "ideas-loader")
-    val animatedAlpha = pulse.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 0.95f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 900, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "ideas-loader-alpha"
+    SkeletonListLoader(
+        contentPadding = PaddingValues(top = 4.dp),
+        verticalSpacing = 8.dp,
+        cardShape = MaterialTheme.shapes.medium,
+        cardColor = Color.White.copy(alpha = 0.9f),
+        titleWidthStart = 0.58f,
+        titleWidthStep = 0.05f,
+        metaBlockWidths = listOf(86.dp, 98.dp)
     )
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        repeat(6) { index ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth((0.58f + index * 0.05f).coerceAtMost(0.9f))
-                            .height(14.dp)
-                            .background(
-                                Color(0xFFCFDBE9).copy(alpha = animatedAlpha.value),
-                                MaterialTheme.shapes.small
-                            )
-                    )
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(
-                            modifier = Modifier
-                                .width(86.dp)
-                                .height(10.dp)
-                                .background(
-                                    Color(0xFFDEE7F1).copy(alpha = animatedAlpha.value),
-                                    MaterialTheme.shapes.small
-                                )
-                        )
-                        Box(
-                            modifier = Modifier
-                                .width(98.dp)
-                                .height(10.dp)
-                                .background(
-                                    Color(0xFFDEE7F1).copy(alpha = animatedAlpha.value),
-                                    MaterialTheme.shapes.small
-                                )
-                        )
-                    }
-                }
-            }
-        }
-    }
 }
 
 @Composable
