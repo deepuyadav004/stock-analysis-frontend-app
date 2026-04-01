@@ -1,8 +1,11 @@
 package com.genxsolutions.growwealth.app.ui
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Star
@@ -36,6 +39,9 @@ import com.genxsolutions.growwealth.feature.home.HomeViewModel
 import com.genxsolutions.growwealth.feature.ideas.IdeasRepository
 import com.genxsolutions.growwealth.feature.ideas.IdeasScreen
 import com.genxsolutions.growwealth.feature.ideas.IdeasViewModel
+import com.genxsolutions.growwealth.feature.news.NewsRepository
+import com.genxsolutions.growwealth.feature.news.NewsScreen
+import com.genxsolutions.growwealth.feature.news.NewsViewModel
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistRepository
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistScreen
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistViewModel
@@ -43,6 +49,7 @@ import com.genxsolutions.growwealth.feature.watchlist.WatchlistViewModel
 enum class AppTab(val label: String) {
     Home("Home"),
     Companies("Companies"),
+    News("News"),
     Ideas("Ideas"),
     Watchlist("Watchlist")
 }
@@ -79,6 +86,7 @@ fun GrowWealthApp() {
                                 when (tab) {
                                     AppTab.Home -> Icon(Icons.Default.Home, contentDescription = tab.label)
                                     AppTab.Companies -> Icon(Icons.Default.Business, contentDescription = tab.label)
+                                    AppTab.News -> Icon(Icons.Default.Article, contentDescription = tab.label)
                                     AppTab.Ideas -> Icon(Icons.Default.TrendingUp, contentDescription = tab.label)
                                     AppTab.Watchlist -> Icon(Icons.Default.Star, contentDescription = tab.label)
                                 }
@@ -130,6 +138,23 @@ fun GrowWealthApp() {
                         state = watchlistState,
                         onRemoveSector = watchlistViewModel::removeSector,
                         onRemoveCompany = watchlistViewModel::removeCompany,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+
+                AppTab.News -> {
+                    val newsViewModel: NewsViewModel = viewModel(
+                        factory = NewsViewModel.Factory(NewsRepository(NetworkModule.api))
+                    )
+                    val state by newsViewModel.uiState.collectAsState()
+                    NewsScreen(
+                        state = state,
+                        onRefresh = newsViewModel::refresh,
+                        onLoadMore = newsViewModel::loadMore,
+                        onArticleClick = { articleUrl ->
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(articleUrl))
+                            context.startActivity(intent)
+                        },
                         modifier = Modifier.padding(innerPadding)
                     )
                 }

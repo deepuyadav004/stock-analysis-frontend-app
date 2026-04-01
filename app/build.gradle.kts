@@ -6,9 +6,9 @@ plugins {
 }
 
 val debugApiBaseUrl = (project.findProperty("DEBUG_API_BASE_URL") as String?)
-    ?: "https://stock-analysis-backend-7evx.vercel.app/"
+    ?: "https://d9vmnjdd-8000.inc1.devtunnels.ms/"
 val releaseApiBaseUrl = (project.findProperty("RELEASE_API_BASE_URL") as String?)
-    ?: "https://stock-analysis-backend-7evx.vercel.app/"
+    ?: "https://d9vmnjdd-8000.inc1.devtunnels.ms/"
 
 android {
     namespace = "com.genxsolutions.growwealth"
