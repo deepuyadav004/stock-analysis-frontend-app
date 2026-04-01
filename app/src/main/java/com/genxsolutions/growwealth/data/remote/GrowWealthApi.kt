@@ -2,6 +2,7 @@ package com.genxsolutions.growwealth.data.remote
 
 import com.genxsolutions.growwealth.feature.ideas.data.dto.IdeaDetailResponseDto
 import com.genxsolutions.growwealth.feature.ideas.data.dto.IdeasListResponseDto
+import com.genxsolutions.growwealth.feature.news.data.dto.NewsListResponseDto
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -82,4 +83,11 @@ interface GrowWealthApi {
     suspend fun getIdeaDetail(
         @Path("ideaId") ideaId: Int
     ): IdeaDetailResponseDto
+
+    @GET("v1/news/list")
+    suspend fun getNewsList(
+        @Query("source") source: String? = null,
+        @Query("limit") limit: Int = 20,
+        @Query("offset") offset: Int = 0
+    ): NewsListResponseDto
 }

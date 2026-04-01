@@ -1,8 +1,14 @@
 package com.genxsolutions.growwealth.app.ui
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Star
@@ -11,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +29,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.genxsolutions.growwealth.data.local.LocalDatabaseModule
@@ -36,6 +48,10 @@ import com.genxsolutions.growwealth.feature.home.HomeViewModel
 import com.genxsolutions.growwealth.feature.ideas.IdeasRepository
 import com.genxsolutions.growwealth.feature.ideas.IdeasScreen
 import com.genxsolutions.growwealth.feature.ideas.IdeasViewModel
+import com.genxsolutions.growwealth.feature.news.NewsRepository
+import com.genxsolutions.growwealth.feature.news.NewsScreen
+import com.genxsolutions.growwealth.feature.news.NewsViewModel
+import com.genxsolutions.growwealth.feature.news.NewsWebViewScreen
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistRepository
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistScreen
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistViewModel
@@ -43,6 +59,7 @@ import com.genxsolutions.growwealth.feature.watchlist.WatchlistViewModel
 enum class AppTab(val label: String) {
     Home("Home"),
     Companies("Companies"),
+    News("News"),
     Ideas("Ideas"),
     Watchlist("Watchlist")
 }
@@ -50,7 +67,22 @@ enum class AppTab(val label: String) {
 @Composable
 fun GrowWealthApp() {
     var currentTab by remember { mutableStateOf(AppTab.Home) }
+    var newsArticleUrl by remember { mutableStateOf<String?>(null) }
+    var isBottomBarVisible by remember { mutableStateOf(true) }
     val context = LocalContext.current
+    val bottomBarScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (source == NestedScrollSource.UserInput) {
+                    when {
+                        available.y < -1f -> isBottomBarVisible = false
+                        available.y > 1f -> isBottomBarVisible = true
+                    }
+                }
+                return Offset.Zero
+            }
+        }
+    }
     val watchlistViewModel: WatchlistViewModel = viewModel(
         factory = WatchlistViewModel.Factory(
             WatchlistRepository(
@@ -65,26 +97,48 @@ fun GrowWealthApp() {
 
     MaterialTheme {
         Scaffold(
-            containerColor = Color(0xFFF4F6F8),
+            modifier = Modifier.nestedScroll(bottomBarScrollConnection),
+            containerColor = Color.Black,
             bottomBar = {
-                NavigationBar(
-                    containerColor = Color(0xFFFFFFFF),
-                    tonalElevation = 8.dp
+                AnimatedVisibility(
+                    visible = isBottomBarVisible,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                 ) {
-                    AppTab.entries.forEach { tab ->
-                        NavigationBarItem(
-                            selected = currentTab == tab,
-                            onClick = { currentTab = tab },
-                            icon = {
-                                when (tab) {
-                                    AppTab.Home -> Icon(Icons.Default.Home, contentDescription = tab.label)
-                                    AppTab.Companies -> Icon(Icons.Default.Business, contentDescription = tab.label)
-                                    AppTab.Ideas -> Icon(Icons.Default.TrendingUp, contentDescription = tab.label)
-                                    AppTab.Watchlist -> Icon(Icons.Default.Star, contentDescription = tab.label)
+                    NavigationBar(
+                        containerColor = Color.Black.copy(alpha = 0.5f),
+                        tonalElevation = 8.dp
+                    ) {
+                        AppTab.entries.forEach { tab ->
+                            NavigationBarItem(
+                                selected = currentTab == tab,
+                                onClick = { currentTab = tab },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = Color.White,
+                                    unselectedIconColor = Color.White.copy(alpha = 0.78f),
+                                    selectedTextColor = Color.White,
+                                    unselectedTextColor = Color.White.copy(alpha = 0.78f),
+                                    indicatorColor = Color(0xFF1A1A1A)
+                                ),
+                                icon = {
+                                    when (tab) {
+                                        AppTab.Home -> Icon(Icons.Default.Home, contentDescription = tab.label)
+                                        AppTab.Companies -> Icon(Icons.Default.Business, contentDescription = tab.label)
+                                        AppTab.News -> Icon(Icons.Default.Article, contentDescription = tab.label)
+                                        AppTab.Ideas -> Icon(Icons.Default.TrendingUp, contentDescription = tab.label)
+                                        AppTab.Watchlist -> Icon(Icons.Default.Star, contentDescription = tab.label)
+                                    }
+                                },
+                                label = {
+                                    Text(
+                                        text = tab.label,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
                                 }
-                            },
-                            label = { Text(tab.label) }
-                        )
+                            )
+                        }
                     }
                 }
             }
@@ -132,6 +186,28 @@ fun GrowWealthApp() {
                         onRemoveCompany = watchlistViewModel::removeCompany,
                         modifier = Modifier.padding(innerPadding)
                     )
+                }
+
+                AppTab.News -> {
+                    val newsViewModel: NewsViewModel = viewModel(
+                        factory = NewsViewModel.Factory(NewsRepository(NetworkModule.api))
+                    )
+                    val state by newsViewModel.uiState.collectAsState()
+                    if (newsArticleUrl == null) {
+                        NewsScreen(
+                            state = state,
+                            onRefresh = newsViewModel::refresh,
+                            onLoadMore = newsViewModel::loadMore,
+                            onArticleClick = { articleUrl -> newsArticleUrl = articleUrl },
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    } else {
+                        NewsWebViewScreen(
+                            url = newsArticleUrl.orEmpty(),
+                            onClose = { newsArticleUrl = null },
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
                 }
 
                 AppTab.Ideas -> {
