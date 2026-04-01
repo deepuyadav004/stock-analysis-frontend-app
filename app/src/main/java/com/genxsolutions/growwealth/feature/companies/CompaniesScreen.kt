@@ -1,6 +1,15 @@
 package com.genxsolutions.growwealth.feature.companies
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -46,8 +55,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,16 +73,17 @@ import com.genxsolutions.growwealth.core.SkeletonListLoader
 import com.genxsolutions.growwealth.data.remote.CompanyListItem
 import com.genxsolutions.growwealth.data.remote.CompanyPerformancePoint
 import com.genxsolutions.growwealth.data.remote.CompanyPerformanceResponse
+import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.roundToInt
 
-private val background = Color(0xFFECEFF4)
-private val cardBg = Color(0xFFFFFFFF)
-private val headingColor = Color(0xFF0D2438)
+private val background = Color(0xFF000000)
+private val cardBg = Color(0xFF162338)
+private val headingColor = Color(0xFFF5F8FF)
 private val upColor = Color(0xFF1B8A5A)
 private val downColor = Color(0xFFD64545)
 private val neutralColor = Color(0xFF607D8B)
-private val filterCardBg = Color(0xFFF8FBFF)
-private val filterCardBorder = Color(0xFFD9E4F0)
+private val filterCardBg = Color(0xFF162338)
+private val filterCardBorder = Color(0xFF314257)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,15 +100,69 @@ fun CompaniesScreen(
     modifier: Modifier = Modifier
 ) {
     val pullState = rememberPullToRefreshState()
+    val listState = rememberLazyListState()
     var showFilterDialog by remember { mutableStateOf(false) }
+    var showSearchAndFilter by remember { mutableStateOf(true) }
+    var lastScrollPosition by remember { mutableIntStateOf(0) }
+    var scrollDeltaAccumulator by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+        }.collectLatest { (index, offset) ->
+            val currentPosition = index * 100000 + offset
+            val delta = currentPosition - lastScrollPosition
+            val visibilityThresholdPx = 28
+
+            when {
+                index == 0 && offset < 24 -> {
+                    showSearchAndFilter = true
+                    scrollDeltaAccumulator = 0
+                }
+                delta > 0 -> {
+                    scrollDeltaAccumulator += delta
+                    if (showSearchAndFilter && scrollDeltaAccumulator > visibilityThresholdPx) {
+                        showSearchAndFilter = false
+                        scrollDeltaAccumulator = 0
+                    }
+                }
+                delta < 0 -> {
+                    scrollDeltaAccumulator += -delta
+                    if (!showSearchAndFilter && scrollDeltaAccumulator > visibilityThresholdPx) {
+                        showSearchAndFilter = true
+                        scrollDeltaAccumulator = 0
+                    }
+                }
+            }
+            lastScrollPosition = currentPosition
+        }
+    }
 
     Surface(modifier = modifier.fillMaxSize(), color = background) {
         Column(modifier = Modifier.fillMaxSize()) {
-            SearchAndFilterBar(
-                filter = state.filter,
-                onOpenFilter = { showFilterDialog = true },
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)
-            )
+            AnimatedVisibility(
+                visible = showSearchAndFilter,
+                enter =
+                    fadeIn(animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)) +
+                    slideInVertically(
+                        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                        initialOffsetY = { -it / 3 }
+                    ) +
+                    expandVertically(animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)),
+                exit =
+                    fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) +
+                    slideOutVertically(
+                        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+                        targetOffsetY = { -it / 3 }
+                    ) +
+                    shrinkVertically(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
+            ) {
+                SearchAndFilterBar(
+                    filter = state.filter,
+                    onOpenFilter = { showFilterDialog = true },
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)
+                )
+            }
 
             PullToRefreshBox(
                 isRefreshing = state.isRefreshing,
@@ -112,8 +178,8 @@ fun CompaniesScreen(
                     state.errorMessage != null && state.items.isEmpty() -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Unable to load companies")
-                                Text(state.errorMessage, style = MaterialTheme.typography.bodySmall)
+                                Text("Unable to load companies", color = Color(0xFFF5F8FF))
+                                Text(state.errorMessage, style = MaterialTheme.typography.bodySmall, color = Color(0xFFB7C4D8))
                                 Button(onClick = onRefresh, modifier = Modifier.padding(top = 14.dp)) {
                                     Text("Retry")
                                 }
@@ -123,12 +189,13 @@ fun CompaniesScreen(
 
                     state.items.isEmpty() -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("No companies found for selected filters")
+                            Text("No companies found for selected filters", color = Color(0xFFF5F8FF))
                         }
                     }
 
                     else -> {
                         CompaniesList(
+                            listState = listState,
                             items = state.items,
                             totalCount = state.totalCount,
                             hasMore = state.hasMore,
@@ -194,8 +261,8 @@ private fun SearchAndFilterBar(
                     .fillMaxWidth()
                     .clickable(onClick = onOpenFilter),
                 shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCBD8E6))
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F1A2B)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF314257))
             ) {
                 Row(
                     modifier = Modifier
@@ -204,11 +271,11 @@ private fun SearchAndFilterBar(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Open search and filters", color = Color(0xFF3D566B), fontWeight = FontWeight.SemiBold)
+                    Text("Open search and filters", color = Color(0xFFF5F8FF), fontWeight = FontWeight.SemiBold)
                     Icon(
                         imageVector = Icons.Default.FilterList,
                         contentDescription = "Open filters",
-                        tint = Color(0xFF2E5C92)
+                        tint = Color(0xFF9DB0C6)
                     )
                 }
             }
@@ -220,7 +287,7 @@ private fun SearchAndFilterBar(
             Text(
                 text = activeFilterText,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF5A7083)
+                color = Color(0xFFB7C4D8)
             )
         }
     }
@@ -334,6 +401,7 @@ private fun CompanyFilterDialog(
 
 @Composable
 private fun CompaniesList(
+    listState: androidx.compose.foundation.lazy.LazyListState,
     items: List<CompanyListItem>,
     totalCount: Int,
     hasMore: Boolean,
@@ -343,7 +411,6 @@ private fun CompaniesList(
     onToggleWatchlist: (CompanyListItem) -> Unit,
     watchlistCompanyIds: Set<Int>
 ) {
-    val listState = rememberLazyListState()
     val isNearBottom by remember {
         derivedStateOf {
             val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
@@ -367,7 +434,7 @@ private fun CompaniesList(
             Text(
                 text = "Showing ${items.size} of $totalCount companies",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF607380)
+                color = Color(0xFFB7C4D8)
             )
         }
 
@@ -383,7 +450,7 @@ private fun CompaniesList(
         if (isLoadingMore) {
             item {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text("Loading more...")
+                    Text("Loading more...", color = Color(0xFFB7C4D8))
                 }
             }
         }
@@ -409,6 +476,7 @@ private fun CompanyRow(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = cardBg),
+        border = androidx.compose.foundation.BorderStroke(1.dp, signalColor.copy(alpha = 0.45f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -435,11 +503,12 @@ private fun CompanyRow(
                         text = company.companyName,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF5F8FF),
                         modifier = Modifier.weight(1f)
                     )
                     Text(
                         text = company.ticker,
-                        color = Color(0xFF4C6475),
+                        color = Color(0xFFB7C4D8),
                         style = MaterialTheme.typography.labelMedium
                     )
                     Spacer(modifier = Modifier.width(6.dp))
@@ -460,11 +529,11 @@ private fun CompanyRow(
                     }
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Close", color = Color(0xFF4B5B67), style = MaterialTheme.typography.bodySmall)
-                    Text("${formatPrice(company.latestClose)}", fontWeight = FontWeight.SemiBold)
+                    Text("Close", color = Color(0xFFB7C4D8), style = MaterialTheme.typography.bodySmall)
+                    Text("${formatPrice(company.latestClose)}", fontWeight = FontWeight.SemiBold, color = Color(0xFFF5F8FF))
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Daily move", color = Color(0xFF4B5B67), style = MaterialTheme.typography.bodySmall)
+                    Text("Daily move", color = Color(0xFFB7C4D8), style = MaterialTheme.typography.bodySmall)
                     Text(
                         text = "${formatSignedPercent(company.dayChangePct)}%",
                         fontWeight = FontWeight.SemiBold,

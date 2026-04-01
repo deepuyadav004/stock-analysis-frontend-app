@@ -74,9 +74,8 @@ fun IdeasScreen(
     val listState = rememberLazyListState()
     val premiumBackground = Brush.verticalGradient(
         colors = listOf(
-            Color(0xFFF4EEE3),
-            Color(0xFFE7EEF9),
-            Color(0xFFE3ECFA)
+            Color(0xFF000000),
+            Color(0xFF000000)
         )
     )
     var showHeader by remember { mutableStateOf(true) }
@@ -257,7 +256,7 @@ private fun IdeasLoadingPlaceholder() {
         contentPadding = PaddingValues(top = 4.dp),
         verticalSpacing = 8.dp,
         cardShape = MaterialTheme.shapes.medium,
-        cardColor = Color.White.copy(alpha = 0.9f),
+        cardColor = Color(0xFF0F1724),
         titleWidthStart = 0.58f,
         titleWidthStep = 0.05f,
         metaBlockWidths = listOf(86.dp, 98.dp)

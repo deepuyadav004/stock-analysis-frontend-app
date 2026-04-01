@@ -34,7 +34,7 @@ fun SkeletonListLoader(
     contentPadding: PaddingValues = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
     verticalSpacing: Dp = 10.dp,
     cardShape: Shape = RoundedCornerShape(16.dp),
-    cardColor: Color = Color.White,
+    cardColor: Color = Color(0xFF111111),
     titleWidthStart: Float = 0.52f,
     titleWidthStep: Float = 0.06f,
     titleWidthMax: Float = 0.9f,

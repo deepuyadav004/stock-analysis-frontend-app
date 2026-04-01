@@ -6,9 +6,9 @@ plugins {
 }
 
 val debugApiBaseUrl = (project.findProperty("DEBUG_API_BASE_URL") as String?)
-    ?: "https://d9vmnjdd-8000.inc1.devtunnels.ms/"
+    ?: "https://stock-analysis-backend-7evx.vercel.app/"
 val releaseApiBaseUrl = (project.findProperty("RELEASE_API_BASE_URL") as String?)
-    ?: "https://d9vmnjdd-8000.inc1.devtunnels.ms/"
+    ?: "https://stock-analysis-backend-7evx.vercel.app/"
 
 android {
     namespace = "com.genxsolutions.growwealth"
@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.compose.material3)
     ksp(libs.androidx.room.compiler)
 
     testImplementation(libs.junit)

@@ -22,7 +22,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,8 +32,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.wear.compose.material3.Text
 import com.genxsolutions.growwealth.core.SkeletonListLoader
 import com.genxsolutions.growwealth.feature.news.domain.NewsItem
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -71,7 +74,7 @@ fun NewsScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFF4F6F8))
+            .background(Color.Black)
     ) {
         Column(
             modifier = Modifier
@@ -79,20 +82,12 @@ fun NewsScreen(
                 .padding(horizontal = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(
-                text = "News & Blogs",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(top = 10.dp)
-            )
-
             when {
                 state.isLoading -> {
                     SkeletonListLoader(
                         contentPadding = PaddingValues(top = 2.dp),
                         verticalSpacing = 8.dp,
                         cardShape = MaterialTheme.shapes.medium,
-                        cardColor = Color.White,
                         titleWidthStart = 0.62f,
                         titleWidthStep = 0.04f,
                         metaBlockWidths = listOf(90.dp, 70.dp)
@@ -214,7 +209,7 @@ private fun NewsCard(
             )
 
             Text(
-                text = item.publishedAt?.let { "Scraped ${formatDate(it)}" } ?: "Scraped recently",
+                text = "Date ${item.publishedAt?.let { formatDate(it) } ?: currentDateString()}",
                 style = MaterialTheme.typography.labelMedium,
                 color = secondaryText
             )
@@ -242,4 +237,8 @@ private fun sourceColor(value: String): Color {
 
 private fun formatDate(value: String): String {
     return if (value.length >= 10) value.substring(0, 10) else value
+}
+
+private fun currentDateString(): String {
+    return SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 }

@@ -1,7 +1,5 @@
 package com.genxsolutions.growwealth.app.ui
 
-import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -14,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.genxsolutions.growwealth.data.local.LocalDatabaseModule
@@ -42,6 +42,7 @@ import com.genxsolutions.growwealth.feature.ideas.IdeasViewModel
 import com.genxsolutions.growwealth.feature.news.NewsRepository
 import com.genxsolutions.growwealth.feature.news.NewsScreen
 import com.genxsolutions.growwealth.feature.news.NewsViewModel
+import com.genxsolutions.growwealth.feature.news.NewsWebViewScreen
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistRepository
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistScreen
 import com.genxsolutions.growwealth.feature.watchlist.WatchlistViewModel
@@ -57,6 +58,7 @@ enum class AppTab(val label: String) {
 @Composable
 fun GrowWealthApp() {
     var currentTab by remember { mutableStateOf(AppTab.Home) }
+    var newsArticleUrl by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val watchlistViewModel: WatchlistViewModel = viewModel(
         factory = WatchlistViewModel.Factory(
@@ -72,16 +74,23 @@ fun GrowWealthApp() {
 
     MaterialTheme {
         Scaffold(
-            containerColor = Color(0xFFF4F6F8),
+            containerColor = Color.Black,
             bottomBar = {
                 NavigationBar(
-                    containerColor = Color(0xFFFFFFFF),
+                    containerColor = Color.Black,
                     tonalElevation = 8.dp
                 ) {
                     AppTab.entries.forEach { tab ->
                         NavigationBarItem(
                             selected = currentTab == tab,
                             onClick = { currentTab = tab },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color.White,
+                                unselectedIconColor = Color.White.copy(alpha = 0.78f),
+                                selectedTextColor = Color.White,
+                                unselectedTextColor = Color.White.copy(alpha = 0.78f),
+                                indicatorColor = Color(0xFF1A1A1A)
+                            ),
                             icon = {
                                 when (tab) {
                                     AppTab.Home -> Icon(Icons.Default.Home, contentDescription = tab.label)
@@ -91,7 +100,14 @@ fun GrowWealthApp() {
                                     AppTab.Watchlist -> Icon(Icons.Default.Star, contentDescription = tab.label)
                                 }
                             },
-                            label = { Text(tab.label) }
+                            label = {
+                                Text(
+                                    text = tab.label,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         )
                     }
                 }
@@ -147,16 +163,21 @@ fun GrowWealthApp() {
                         factory = NewsViewModel.Factory(NewsRepository(NetworkModule.api))
                     )
                     val state by newsViewModel.uiState.collectAsState()
-                    NewsScreen(
-                        state = state,
-                        onRefresh = newsViewModel::refresh,
-                        onLoadMore = newsViewModel::loadMore,
-                        onArticleClick = { articleUrl ->
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(articleUrl))
-                            context.startActivity(intent)
-                        },
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    if (newsArticleUrl == null) {
+                        NewsScreen(
+                            state = state,
+                            onRefresh = newsViewModel::refresh,
+                            onLoadMore = newsViewModel::loadMore,
+                            onArticleClick = { articleUrl -> newsArticleUrl = articleUrl },
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    } else {
+                        NewsWebViewScreen(
+                            url = newsArticleUrl.orEmpty(),
+                            onClose = { newsArticleUrl = null },
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
                 }
 
                 AppTab.Ideas -> {

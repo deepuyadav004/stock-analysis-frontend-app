@@ -44,16 +44,16 @@ import com.genxsolutions.growwealth.data.remote.SectorDetailResponse
 import com.genxsolutions.growwealth.data.remote.SectorSignal
 import com.genxsolutions.growwealth.data.remote.SectorTrend
 
-private val homeBackground = Color(0xFFECEFF4)
+private val homeBackground = Color(0xFF000000)
 private val freshnessBackground = Color(0xFF102A4D)
 private val freshnessAccent = Color(0xFF1F4F86)
-private val moodBackground = Color(0xFFFBFCFE)
+private val moodBackground = Color(0xFF162338)
 private val upColor = Color(0xFF1B8A5A)
 private val downColor = Color(0xFFD64545)
 private val neutralColor = Color(0xFF607D8B)
-private val cardBorder = Color(0xFFE3E7EA)
-private val headingColor = Color(0xFF0D2438)
-private val sectorCardBackground = Color(0xFFFDFEFF)
+private val cardBorder = Color(0xFF314257)
+private val headingColor = Color(0xFFF5F8FF)
+private val sectorCardBackground = Color(0xFF162338)
 
 @Composable
 fun HomeScreen(
@@ -112,7 +112,7 @@ private fun HomeLoadingPlaceholder(modifier: Modifier = Modifier) {
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
             verticalSpacing = 12.dp,
             cardShape = RoundedCornerShape(18.dp),
-            cardColor = Color.White.copy(alpha = 0.86f),
+            cardColor = Color(0xFF0F1724),
             titleWidthStart = 0.55f,
             titleWidthStep = 0.08f,
             metaBlockWidths = listOf(120.dp),
@@ -256,7 +256,12 @@ private fun MarketMoodCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Market Mood", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                "Market Mood",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFF5F8FF)
+            )
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -265,18 +270,18 @@ private fun MarketMoodCard(
                 MoodChip(label = "Weakening", value = downCount, color = downColor, modifier = Modifier.weight(1f))
                 MoodChip(label = "Stable", value = neutralCount, color = neutralColor, modifier = Modifier.weight(1f))
             }
-            Divider(color = cardBorder)
+            Divider(color = Color.White.copy(alpha = 0.15f))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Today signals look", color = Color(0xFF4B5B67))
-                Text(marketReliability, fontWeight = FontWeight.SemiBold)
+                Text("Today signals look", color = Color(0xFFB7C4D8))
+                Text(marketReliability, fontWeight = FontWeight.SemiBold, color = Color(0xFFF5F8FF))
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("News tone is", color = Color(0xFF4B5B67))
-                Text(marketMood, fontWeight = FontWeight.SemiBold)
+                Text("News tone is", color = Color(0xFFB7C4D8))
+                Text(marketMood, fontWeight = FontWeight.SemiBold, color = Color(0xFFF5F8FF))
             }
             Text(
                 "Quick guidance only, not a guarantee.",
-                color = Color(0xFF738592),
+                color = Color(0xFF9DB0C6),
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -313,7 +318,7 @@ private fun MiniTrendStripCard(trends: List<SectorTrend>) {
                         text = trend.sectorName,
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF2F4654)
+                        color = Color(0xFFE1E9F5)
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         trend.points.takeLast(7).forEach { point ->
@@ -354,6 +359,7 @@ private fun SectorSignalRow(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = sectorCardBackground),
+        border = androidx.compose.foundation.BorderStroke(1.dp, signalColor.copy(alpha = 0.45f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -380,6 +386,7 @@ private fun SectorSignalRow(
                         sector.sectorName,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF5F8FF),
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(onClick = onWatchlistClick) {
@@ -400,22 +407,22 @@ private fun SectorSignalRow(
                     SoftBadge(
                         text = signalText(sector.signal),
                         background = signalColor.copy(alpha = 0.14f),
-                        textColor = signalColor
+                        textColor = Color(0xFFF5F8FF)
                     )
                 }
                 Text(
                     text = shortSectorSummary(sector),
-                    color = Color(0xFF2F4654),
+                    color = Color(0xFFB7C4D8),
                     fontWeight = FontWeight.SemiBold,
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("News tone", color = Color(0xFF4B5B67))
-                    Text(sentimentLabel(sector.sentimentScore), fontWeight = FontWeight.SemiBold)
+                    Text("News tone", color = Color(0xFFB7C4D8))
+                    Text(sentimentLabel(sector.sentimentScore), fontWeight = FontWeight.SemiBold, color = Color(0xFFF5F8FF))
                 }
                 Text(
                     text = "Snapshot ${sector.snapshotDate}",
-                    color = Color(0xFF738592),
+                    color = Color(0xFF9DB0C6),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -604,9 +611,14 @@ private fun CenterMessage(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+        Text(
+            title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFFF5F8FF)
+        )
         if (subtitle != null) {
-            Text(subtitle, modifier = Modifier.padding(top = 8.dp), color = Color(0xFF5D6D77))
+            Text(subtitle, modifier = Modifier.padding(top = 8.dp), color = Color(0xFFB7C4D8))
         }
         if (actionLabel != null && onAction != null) {
             Button(onClick = onAction, modifier = Modifier.padding(top = 16.dp), shape = RoundedCornerShape(12.dp)) {

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,8 +27,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-private val background = Color(0xFFECEFF4)
-private val cardBg = Color(0xFFFFFFFF)
+private val background = Color(0xFF000000)
+private val cardBg = Color(0xFF162338)
+private val primaryText = Color(0xFFF5F8FF)
+private val secondaryText = Color(0xFFB7C4D8)
+private val upColor = Color(0xFF1B8A5A)
+private val downColor = Color(0xFFD64545)
+private val neutralColor = Color(0xFF607D8B)
 
 @Composable
 fun WatchlistScreen(
@@ -40,7 +46,10 @@ fun WatchlistScreen(
         when {
             state.sectorItems.isEmpty() && state.companyItems.isEmpty() -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Your watchlist is empty. Add sectors from Home or companies from Companies tab.")
+                    Text(
+                        "Your watchlist is empty. Add sectors from Home or companies from Companies tab.",
+                        color = primaryText
+                    )
                 }
             }
 
@@ -54,7 +63,8 @@ fun WatchlistScreen(
                         Text(
                             "Watchlist",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = primaryText
                         )
                     }
 
@@ -63,16 +73,23 @@ fun WatchlistScreen(
                             Text(
                                 text = "Companies",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
+                                color = primaryText
                             )
                         }
                     }
 
                     items(state.companyItems) { item ->
+                        val moveColor = when {
+                            item.dayChangePct > 0.0 -> upColor
+                            item.dayChangePct < 0.0 -> downColor
+                            else -> neutralColor
+                        }
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = cardBg),
                             shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, moveColor.copy(alpha = 0.45f)),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
                             Column(
@@ -81,20 +98,21 @@ fun WatchlistScreen(
                                     .padding(12.dp),
                                 verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(item.companyName, fontWeight = FontWeight.SemiBold)
+                                Text(item.companyName, fontWeight = FontWeight.SemiBold, color = primaryText)
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Ticker")
-                                    Text("${item.ticker} • ${item.exchangeCode}", fontWeight = FontWeight.SemiBold)
+                                    Text("Ticker", color = secondaryText)
+                                    Text("${item.ticker} • ${item.exchangeCode}", fontWeight = FontWeight.SemiBold, color = primaryText)
                                 }
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Latest close")
-                                    Text("₹${String.format("%,.2f", item.latestClose)}", fontWeight = FontWeight.SemiBold)
+                                    Text("Latest close", color = secondaryText)
+                                    Text("₹${String.format("%,.2f", item.latestClose)}", fontWeight = FontWeight.SemiBold, color = primaryText)
                                 }
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Daily move")
+                                    Text("Daily move", color = secondaryText)
                                     Text(
                                         "${formatSignedPercent(item.dayChangePct)}%",
-                                        fontWeight = FontWeight.SemiBold
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = moveColor
                                     )
                                 }
                                 Button(onClick = { onRemoveCompany(item.companyId) }, modifier = Modifier.fillMaxWidth()) {
@@ -112,16 +130,23 @@ fun WatchlistScreen(
                             Text(
                                 text = "Sectors",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
+                                color = primaryText
                             )
                         }
                     }
 
                     items(state.sectorItems) { item ->
+                        val signalColor = when (item.signal.uppercase()) {
+                            "UP" -> upColor
+                            "DOWN" -> downColor
+                            else -> neutralColor
+                        }
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = cardBg),
                             shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, signalColor.copy(alpha = 0.45f)),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
                             Column(
@@ -130,18 +155,18 @@ fun WatchlistScreen(
                                     .padding(12.dp),
                                 verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(item.sectorName, fontWeight = FontWeight.SemiBold)
+                                Text(item.sectorName, fontWeight = FontWeight.SemiBold, color = primaryText)
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Signal")
-                                    Text(item.signal, fontWeight = FontWeight.SemiBold)
+                                    Text("Signal", color = secondaryText)
+                                    Text(item.signal, fontWeight = FontWeight.SemiBold, color = signalColor)
                                 }
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Confidence")
-                                    Text("${(item.confidence * 100).toInt()}%", fontWeight = FontWeight.SemiBold)
+                                    Text("Confidence", color = secondaryText)
+                                    Text("${(item.confidence * 100).toInt()}%", fontWeight = FontWeight.SemiBold, color = primaryText)
                                 }
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Snapshot")
-                                    Text(item.snapshotDate, fontWeight = FontWeight.SemiBold)
+                                    Text("Snapshot", color = secondaryText)
+                                    Text(item.snapshotDate, fontWeight = FontWeight.SemiBold, color = primaryText)
                                 }
                                 Button(onClick = { onRemoveSector(item.sectorId) }, modifier = Modifier.fillMaxWidth()) {
                                     Text("Remove")
